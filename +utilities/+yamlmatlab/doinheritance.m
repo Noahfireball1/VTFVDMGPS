@@ -62,7 +62,7 @@ function result = iter_struct(data, level, addit)
     
     for i = fields(result)'
         fld = char(i);
-        if isstruct(result.(fld)) && isfield(result.(fld), kwd_parent())
+        if isstruct(result.(fld)) && isfield(result.(fld), utilities.yamlmatlab.kwd_parent())
             result.(fld) = inherit(result.(fld), result.(fld).(kwd_parent()), [], addit{1}, {});
         end;
     end;

@@ -45,8 +45,8 @@ function result = ReadYaml(filename, nosuchfileaction, makeords, treatasdata, di
     end 
 
     
-    ry = ReadYamlRaw(filename, 0, nosuchfileaction, treatasdata);
-    ry = deflateimports(ry);
+    ry = utilities.yamlmatlab.ReadYamlRaw(filename, 0, nosuchfileaction, treatasdata);
+    ry = utilities.yamlmatlab.deflateimports(ry);
     if iscell(ry) && ...
         length(ry) == 1 && ...
         isstruct(ry{1}) && ...
@@ -54,9 +54,9 @@ function result = ReadYaml(filename, nosuchfileaction, makeords, treatasdata, di
         isfield(ry{1},'import')        
         ry = ry{1};
     end
-    ry = mergeimports(ry);    
-    ry = doinheritance(ry);
-    ry = makematrices(ry, makeords);    
+    ry = utilities.yamlmatlab.mergeimports(ry);    
+    ry = utilities.yamlmatlab.doinheritance(ry);
+    ry = utilities.yamlmatlab.makematrices(ry, makeords);    
     if exist('dictionary','var')
         ry = dosubstitution(ry, dictionary);
     end

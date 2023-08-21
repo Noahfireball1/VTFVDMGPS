@@ -1,2 +1,6 @@
 # Example Configuration File for VTFVDMGPS
 general:
+  year: 2022
+  month: 12
+  day: 22
+FVDMName: 1_Scurve

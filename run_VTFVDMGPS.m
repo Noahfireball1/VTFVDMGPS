@@ -21,8 +21,8 @@ inputFile = uigetfile({'*.yaml'},'Select Input File',dir.config);
 inputFilePath = append(dir.config,inputFile);
 
 %% Configuring Vector Tracking Class
-DCAM = VectorTracking(inputFilePath);
-plotDCAM = VectorTrackingPlotting(inputFilePath);
+DCAM = VectorTracking(inputFilePath,dir);
+% plotDCAM = VectorTrackingPlotting(inputFilePath,dir);
 
 %% Start Vector Tracking
 utilities.printText(1)
