@@ -13,7 +13,7 @@ function result = deflateimports(r)
 end
 
 function result = recurse(data, level, addit)
-    if iscell(data) && ~ismymatrix(data)
+    if iscell(data) && ~utilities.yamlmatlab.ismymatrix(data)
         result = iter_cell(data, level, addit);
     elseif isstruct(data)
         result = iter_struct(data, level, addit);

@@ -15,6 +15,9 @@ switch option
         utilities.cprintf(programStyle,'[VTFVDMGPS]\t')
         utilities.cprintf(textStyle, 'https://cddis.nasa.gov username and password not found.\n\t\t\tPlease enter below:\n')
 
+    case 4
+        utilities.cprintf(programStyle,'[VTFVDMGPS]\t')
+        utilities.cprintf(textStyle, 'Vector tracking receiver successfully configured. Starting...\n')
     otherwise
 end
 end

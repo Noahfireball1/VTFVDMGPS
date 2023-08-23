@@ -1,6 +1,50 @@
-# Example Configuration File for VTFVDMGPS
+# Example Configuration File for DCAM
 general:
   year: 2022
   month: 12
   day: 22
-FVDMName: 1_Scurve
+  verbose: 1
+  numMonteCarloRuns: 1 # 1 specifies no monte carlo analysis
+  save: 1
+  outputDir: # If user wants to output result files to an external drive, otherwise save to current output directory
+aircraft:
+  time: 30 # [s]
+  frequency: 400 # [Hz]
+  waypoints: SCurveFlightPath
+  lookaheadDistance: 50 # [m]
+  initialState:
+    latitude: 32.612788581736706 # [degrees]
+    longitude: -85.43535088858731 # [degrees]
+    u: 75 # [m/s]
+    v: 0 # [m/s]
+    w: 0 # [m/s]
+    p: 0 # [rad/s]
+    q: 0 # [rad/s]
+    r: 0 # [rad/s]
+    x: 0 # [m]
+    y: 0 # [m]
+    z: -1000 # [m]
+    phi: 0 # [rad]
+    theta: 4*pi/180 # [rad]
+    psi: pi # [rad]
+noise:
+  wind:
+    direction: 360 # (1) [deg]
+    directionTS: 60 # (1) [s]
+    velocity: 30 # (1) [m/s]
+    velocityTS: 15 # (1) [s]
+  gravity:
+    force: [1;1;1] # (3,1) [N]
+    forceTS: 0.0025 # (1) [s]
+    moment: [3;3;3] # (3,1) [N*m]
+    momentTS: 0.0025 # (1) [s]
+  aero:
+    force: [250;125;125] # (3,1) [N]
+    forceTS: 0.005 # (1) [s]
+    moment: [1000;500;500] # (3,1) [N*m]
+    momentTS: 0.0025 # (1) [s]
+  engine:
+    force: [100;25;25] # (3,1) [N]
+    forceTS: 0.0025 # (1) [s]
+    moment: [500;125;125] # (3,1) [N*m]
+    momentTS: 0.0025 # (1) [s]

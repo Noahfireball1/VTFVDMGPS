@@ -51,7 +51,45 @@ classdef GenerateEphemeris < handle
 
             % Select only ephemeris at 0000 hrs
             timeIdxs = ephTemp.Time == datetime(obj.ephYear,obj.ephMonth,obj.ephDay,0,0,0);
-            obj.eph = ephTemp(timeIdxs,:);
+
+            ephTemp = table2struct(ephTemp(timeIdxs,:));
+            for i = 1:height(ephTemp)
+
+                obj.eph.satelliteID(1,i) = ephTemp(i).SatelliteID;
+                obj.eph.SVClockBias(1,i) = ephTemp(i).SVClockBias;
+                obj.eph.SVClockDrift(1,i) = ephTemp(i).SVClockDrift;
+                obj.eph.SVClockDriftRate(1,i) = ephTemp(i).SVClockDriftRate;
+                obj.eph.IODE(1,i) = ephTemp(i).IODE;
+                obj.eph.Crs(1,i) = ephTemp(i).Crs;
+                obj.eph.Delta_n(1,i) = ephTemp(i).Delta_n;
+                obj.eph.M0(1,i) = ephTemp(i).M0;
+                obj.eph.Cuc(1,i) = ephTemp(i).Cuc;
+                obj.eph.Eccentricity(1,i) = ephTemp(i).Eccentricity;
+                obj.eph.Cus(1,i) = ephTemp(i).Cus;
+                obj.eph.sqrtA(1,i) = ephTemp(i).sqrtA;
+                obj.eph.Toe(1,i) = ephTemp(i).Toe;
+                obj.eph.Cic(1,i) = ephTemp(i).Cic;
+                obj.eph.OMEGA0(1,i) = ephTemp(i).OMEGA0;
+                obj.eph.Cis(1,i) = ephTemp(i).Cis;
+                obj.eph.i0(1,i) = ephTemp(i).i0;
+                obj.eph.Crc(1,i) = ephTemp(i).Crc;
+                obj.eph.omega(1,i) = ephTemp(i).omega;
+                obj.eph.OMEGA_DOT(1,i) = ephTemp(i).OMEGA_DOT;
+                obj.eph.IDOT(1,i) = ephTemp(i).IDOT;
+                obj.eph.L2ChannelCodes(1,i) = ephTemp(i).L2ChannelCodes;
+                obj.eph.GPSWeek(1,i) = ephTemp(i).GPSWeek;
+                obj.eph.L2PDataFlag(1,i) = ephTemp(i).L2PDataFlag;
+                obj.eph.SVAccuracy(1,i) = ephTemp(i).SVAccuracy;
+                obj.eph.SVHealth(1,i) = ephTemp(i).SVHealth;
+                obj.eph.TGD(1,i) = ephTemp(i).TGD;
+                obj.eph.IODC(1,i) = ephTemp(i).IODC;
+                obj.eph.TransmissionTime(1,i) = ephTemp(i).TransmissionTime;
+                obj.eph.FitInterval(1,i) = ephTemp(i).FitInterval;
+                obj.eph.BRDCOrbit7Spare3(1,i) = ephTemp(i).BRDCOrbit7Spare3;
+                obj.eph.BRDCOrbit7Spare4(1,i) = ephTemp(i).BRDCOrbit7Spare4;
+
+
+            end
 
         end
 

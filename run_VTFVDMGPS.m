@@ -10,7 +10,6 @@ addpath(genpath(projectRoot))
 dir.config = append(projectRoot,filesep,'config',filesep);
 dir.source = append(projectRoot,filesep,'source',filesep);
 dir.dataGPS = append(projectRoot,filesep,'data',filesep,'GPS',filesep);
-dir.dataFVDM = append(projectRoot,filesep,'data',filesep,'FVDM',filesep);
 dir.output = append(projectRoot,filesep,'output',filesep);
 
 %% Initial Text to Console
@@ -25,10 +24,5 @@ DCAM = VectorTracking(inputFilePath,dir);
 % plotDCAM = VectorTrackingPlotting(inputFilePath,dir);
 
 %% Start Vector Tracking
-utilities.printText(1)
-
-for timeStep = 1:DCAM.timeStep
-
-    DCAM.step(timeStep)
-
-end
+utilities.printText.options(4)
+process(DCAM);
