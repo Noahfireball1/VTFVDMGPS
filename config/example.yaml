@@ -9,7 +9,7 @@ general:
   outputDir: # If user wants to output result files to an external drive, otherwise save to current output directory
 aircraft:
   time: 30 # [s]
-  frequency: 400 # [Hz]
+  frequency: 200 # [Hz]
   waypoints: SCurveFlightPath
   lookaheadDistance: 50 # [m]
   initialState:
@@ -35,16 +35,16 @@ noise:
     velocityTS: 15 # (1) [s]
   gravity:
     force: [1;1;1] # (3,1) [N]
-    forceTS: 0.0025 # (1) [s]
+    forceTS: 1 # (1) [s]
     moment: [3;3;3] # (3,1) [N*m]
-    momentTS: 0.0025 # (1) [s]
+    momentTS: 1 # (1) [s]
   aero:
     force: [250;125;125] # (3,1) [N]
-    forceTS: 0.005 # (1) [s]
+    forceTS: 1 # (1) [s]
     moment: [1000;500;500] # (3,1) [N*m]
-    momentTS: 0.0025 # (1) [s]
+    momentTS: 1 # (1) [s]
   engine:
     force: [100;25;25] # (3,1) [N]
-    forceTS: 0.0025 # (1) [s]
+    forceTS: 1 # (1) [s]
     moment: [500;125;125] # (3,1) [N*m]
-    momentTS: 0.0025 # (1) [s]
+    momentTS: 1 # (1) [s]

@@ -9,13 +9,18 @@ classdef VectorTracking < handle
         startTime = 0;
         endTime;
         timeStep;
+        predictedStates;
+        truthStates;
+        truthPropRevolution;
+        propRevolution;
+        controlsIn
 
 
     end
 
     properties (Access = private)
 
-        
+
 
     end
 
@@ -38,7 +43,34 @@ classdef VectorTracking < handle
             obj.currentSeed = randi(1e6);
 
             % Start Simulation
-            results = sim('source\FlightVehicleDynamicModel\DA40_Flight_Model.slx');
+            obj.predictedStates = obj.FVDM.initialStates;
+            obj.truthStates = obj.FVDM.initialStates;
+            obj.propRevolution = 200;
+            obj.truthPropRevolution = 200;
+
+
+            for i = 1:10000
+                % results = sim('source\FlightVehicleDynamicModel\DA40_Flight_Model.slx','SimulationMode','accelerator');
+                % 
+                % obj.predictedStates = results.predictedStates(2,:)';
+                % obj.propRevolution = results.propRevolution(2);
+                % obj.truthStates = results.truthStates(2,:);
+                % obj.truthPropRevolution = results.truthPropRevolution(2);
+
+                open('DA40_Flight_Model');
+                mdl = bdroot;
+                set_param(mdl, 'SaveFinalState', 'on', 'FinalStateName',...
+                    [mdl 'SimState'],'SaveCompleteFinalSimState', 'on')
+                results = sim(mdl, [0 15]);
+                geoplot(results.trueLAT,results.trueLONG,'b');
+                set_param(mdl, 'LoadInitialState', 'on', 'InitialState',...
+                    [mdl 'SimState']);
+                results1 = sim(mdl, [15 25]);
+                hold on; geoplot(results1.trueLAT,results1.trueLONG,'b');
+                set_param(mdl, 'LoadInitialState', 'off');
+
+
+            end
 
         end
 
@@ -49,9 +81,9 @@ classdef VectorTracking < handle
         function parseYaml(obj,config,dirs)
 
             gen = config.general;
-            obj.endTime = config.aircraft.time;
-            obj.timeStep = 1/config.aircraft.frequency;
 
+            obj.timeStep = 1/config.aircraft.frequency;
+            obj.endTime = obj.timeStep;
             obj.date = datetime(gen.year,gen.month,gen.day);
             obj.FVDM.dayOfYear = day(obj.date,"dayofyear");
 
@@ -94,7 +126,7 @@ classdef VectorTracking < handle
             STNumbers = load("DA40ST.mat");
             STGeometry = load("DA40STGEOM.mat");
             selWaypoints = load(sprintf('%s.mat',config.aircraft.waypoints));
-            
+
 
 
 
