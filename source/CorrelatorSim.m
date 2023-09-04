@@ -13,7 +13,7 @@ classdef CorrelatorSim < handle
     end
 
     methods
-        function [obj,psrRes,carrRes,variances] = CorrelatorSim(VT,estPsr,estCarrFreq)
+        function [obj,psrRes,carrRes,variances] = CorrelatorSim(VT,estPsr,estCarrFreq,sv)
 
             % Propagate Measurement States
             statesBody = VT.measStates;
@@ -21,7 +21,7 @@ classdef CorrelatorSim < handle
             statesECEF = [statesECEF 0] + randn(1,7).*[1.5 0.15 1.5 0.15 3.0 0.3 0];
 
             % Calculate Measured Pseudoranges, Carrier Frequencies
-            [measPsr,measCarrFreq] = VT.GE.calcPsr(statesECEF,VT.svStates);
+            [measPsr,measCarrFreq] = VT.GE.calcPsr(statesECEF,sv);
 
 
             % Calculate Carrier Frequency and Code Phase Errors
@@ -46,9 +46,7 @@ classdef CorrelatorSim < handle
             [carrRes,R] = obj.calcCarrRes(discFLL,amplitude,psrRes);
 
             % Calculating Variances for Measurement Update
-            var = obj.calcResVariances(psrRes,R);
-            variances.psr = diag(var.psr);
-            variances.carr = diag(var.carr);
+            variances = obj.calcResVariances(psrRes,R);
 
 
 
@@ -83,13 +81,15 @@ classdef CorrelatorSim < handle
             psrRes = discDLL.*obj.chipWidth./(2.*amplitude);
         end
         function [carrRes,R] = calcCarrRes(obj,discFLL,amplitude,psrRes)
-            if psrRes/obj.chipWidth < 1
-                R = 1 - psrRes./obj.chipWidth;
-            else
-                R = zeros(1,length(psrRes));
-            end
+            for i = 1:length(psrRes)
+                if psrRes(i)/obj.chipWidth < 1
+                    R(i) = 1 - psrRes(i)/obj.chipWidth;
+                else
+                    R(i) = 0;
+                end
 
-            carrRes = discFLL./(-amplitude.^2.*R.^2*pi*obj.pdiTime*obj.wavelength);
+                carrRes(i) = discFLL(i)./(-amplitude(i)^2.*R(i)^2*pi*obj.pdiTime*obj.wavelength);
+            end
         end
         function variances = calcResVariances(obj,psrRes,R)
             variances.psr = (obj.chipWidth^2/(2*(obj.pdiTime*obj.cn0)^2) + (obj.chipWidth^2.*(psrRes./obj.chipWidth).^2 + 0.25)/(obj.pdiTime*obj.cn0));

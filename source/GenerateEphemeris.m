@@ -206,7 +206,7 @@ classdef GenerateEphemeris < handle
 
     end
     methods (Access = public)
-        function [psr,carrFreq] = calcPsr(obj,usrStates, svStates)
+        function [psr,carrFreq,unitVectors] = calcPsr(obj,usrStates, svStates)
 
             dx = (svStates(1,:) - usrStates(1)).^2;
             dy = (svStates(3,:) - usrStates(3)).^2;

@@ -10,6 +10,7 @@ classdef VectorTracking < handle
         aircraft;
         engineParameters;
         initialStates;
+        unitVectors;
         measStates;
         controls;
         svStates;
@@ -44,38 +45,65 @@ classdef VectorTracking < handle
             % Initialize Variables
             time = obj.startTime:obj.timeStep:obj.endTime;
             measTime = obj.startTime:1/50:obj.endTime;
-            [estPsr,estCarrFreq] = obj.initialization;
+            [estPsr,estCarrFreq,uV] = obj.initialization;
 
             WaypointFollower = uavWaypointFollower('UAVType','fixed-wing','StartFrom','first','Waypoints',flipud(obj.aircraft.waypoints),'TransitionRadius',1000);
             state = obj.initialStates;
+            obj.unitVectors = uV;
+
+            VLL = VDFLL();
+
+            bodyStates = obj.initialStates;
+
+            body2ned = genDCM('rad',[bodyStates(12) bodyStates(11) bodyStates(10)],[3 2 1]);
+            nedP = body2ned*obj.initialStates(7:9);
+            nedV = body2ned*obj.initialStates(1:3);
+            clockBias = 0;
+            clockDrift = 0;
+
+            [x,y,z] = ned2ecef(nedP(1),nedP(2),nedP(3),obj.aircraft.LLA(1),obj.aircraft.LLA(2),obj.aircraft.LLA(3),wgs84Ellipsoid("meter"));
+            [xdot,ydot,zdot] = ned2ecefv(nedV(1),nedV(2),nedV(3),obj.aircraft.LLA(1),obj.aircraft.LLA(2));
+
+            X_m = [x;xdot;y;ydot;z;zdot;clockBias;clockDrift];
+            P_m = zeros(8);
+            transmitTime = 0;
 
             measIdx = 1;
             for timeIdx = 1:length(time)
 
-                obj.timeSeconds = time(timeIdx);
-                obj.svStates = obj.calcSVStates();
+                %% Generating Measurement States and Controls
+                [state,obj.engineParameters,trueControls] = FVDM_Truth(obj.timeStep,state,obj.engineParameters,WaypointFollower,obj.aircraft);
+                obj.measStates = state;
+                ecefStates = obj.body2ECEF(obj.measStates);
+                sv = obj.calcSVStates(transmitTime);
+                obj.controls = trueControls;
 
-                if (measTime(measIdx) - time(timeIdx)) == 0
-                    %% Generating Measurement States and Controls
-                    [state,obj.engineParameters,trueControls] = FVDM_Truth(obj.timeStep,state,obj.engineParameters,WaypointFollower,obj.aircraft);
-                    obj.measStates = state;
-                    obj.controls = trueControls;
-                    
-                    %% Simulating Correlators
-                    [CS,psrRes,carrRes,variances] = CorrelatorSim(obj,estPsr,estCarrFreq);
+                % Modify svStates to only be satellites in-view
+                sv = obj.sortSVs(ecefStates,sv);
 
-                    measIdx = measIdx + 1;
+                %% Simulating Correlators
+                [CS,psrRes,carrRes,variances] = CorrelatorSim(obj,estPsr,estCarrFreq,sv);
 
-                    [NP,estPsr,estCarrFreq] = NavigationProcessor(obj,psrRes,carrRes,variances,2);
-                else
-                    %% Navigation Processor
-                    [NP,estPsr,estCarrFreq] = NavigationProcessor(obj,psrRes,carrRes,variances,1);
-                end
+
+                %% Navigation Processor
+
+                % Time Update
+                [X_m,P_m] = VLL.timeUpdate(1/50,X_m,P_m);
+
+                % Measurement Update
+                [X_p,P_p] = VLL.measurementUpdate(obj,X_m,P_m,psrRes,carrRes,variances);
+                X_m = X_p;
+                P_m = P_p;
+
+                % Prediction and Propagation
+                transmitTime = transmitTime + time(timeIdx);
+                sv = obj.calcSVStates(transmitTime);
+                sv = obj.sortSVs(X_m,sv);
+                [estPsr,estCarrFreq,obj.unitVectors] = obj.GE.calcPsr(X_m,sv);
+
             end
 
         end
-
-
     end
 
     methods (Access = private)
@@ -126,7 +154,7 @@ classdef VectorTracking < handle
 
         end
 
-        function [psr,carrFreq] = initialization(obj)
+        function [psr,carrFreq,unitVectors] = initialization(obj)
 
             body2ned = genDCM('rad',obj.initialStates(10:12),[3 2 1]);
             nedP = body2ned*obj.initialStates(7:9);
@@ -164,15 +192,19 @@ classdef VectorTracking < handle
 
             [satX,satY,satZ,satU,satV,satW,satClkCorr] = obj.GE.calcSatellitePositions(transmitTime,satelliteID,toe,a_f2,a_f1,a_f0,T_GD,sqrtA,Eccentricity,C_us,C_uc,C_rs,C_rc,C_is,C_ic,M_0,iDOT,i_0,OMEGA,OMEGA_DOT,delta_n,OMEGA_0);
 
-            svStates = [satX;satU;satY;satV;satZ;satW;satClkCorr];
+            sv = [satX;satU;satY;satV;satZ;satW;satClkCorr];
 
-            [psr,carrFreq] = obj.GE.calcPsr(rcvrStates,svStates);
+            ecefStates = obj.body2ECEF(obj.initialStates);
+
+            sv = obj.sortSVs(ecefStates,sv);
+
+            [psr,carrFreq,unitVectors] = obj.GE.calcPsr(rcvrStates,sv);
 
         end
 
-        function svStates = calcSVStates(obj)
+        function svStates = calcSVStates(obj,navTime)
 
-            transmitTime = obj.ephemeris.Toe + obj.timeSeconds;
+            transmitTime = obj.ephemeris.Toe + navTime;
             satelliteID = obj.ephemeris.satelliteID;
             toe = obj.ephemeris.Toe;
             a_f2 = obj.ephemeris.SVClockDriftRate;
@@ -213,6 +245,19 @@ classdef VectorTracking < handle
             [u,v,w] = ned2ecefv(vel_NED(1),vel_NED(2),vel_NED(3),obj.aircraft.LLA(1),obj.aircraft.LLA(2),"degrees");
 
             states_ECEF = [x,u,y,v,z,w];
+        end
+
+        function svs = sortSVs(obj,states,svs)
+
+            svX = svs(1,:);
+            svY = svs(3,:);
+            svZ = svs(5,:);
+
+            [LLA] = ecef2lla([states(1) states(3) states(5)]);
+
+            [~,el,~] = ecef2aer(svX,svY,svZ,LLA(1),LLA(2),LLA(3),wgs84Ellipsoid("meter"));
+
+            svs = svs(:,el > 10);
         end
 
     end

@@ -2,8 +2,6 @@ classdef NavigationProcessor < handle
 
     properties
         fullStates;
-        engineParameters;
-        aircraft;
     end
 
     properties
@@ -13,54 +11,78 @@ classdef NavigationProcessor < handle
         K;
         S;
         covariance_plus;
-        covariance_minus;
+        covariance_minus = diag([100*ones(1,6),0.00001,0.0000001]);
         delStates;
         states_plus;
         R;
-        Q;
-        
+        Q = diag([100*ones(1,12),0.00001,0.0000001]);
+        unitVectors;
+
 
     end
 
     methods
-        function [obj,estPsr,estCarrFreq] = NavigationProcessor(VT,psrRes,carrRes,variances,type)
+        function [obj,estPsr,estCarrFreq,bodyStates,engineParameters] = NavigationProcessor(VT,psrRes,carrRes,variances,bodyStates,engineParameters,type)
 
-            % Propagate Satellite Positions
-            svStates = VT.svStates;
             if VT.timeSeconds == 0
-                obj.fullStates = VT.initialStates;
-            end
 
+                bodyStates = VT.initialStates;
+
+                body2ned = genDCM('rad',[bodyStates(12) bodyStates(11) bodyStates(10)],[3 2 1]);
+                nedP = body2ned*VT.initialStates(7:9);
+                nedV = body2ned*VT.initialStates(1:3);
+                clockBias = 0;
+                clockDrift = 0;
+
+                [x,y,z] = ned2ecef(nedP(1),nedP(2),nedP(3),VT.aircraft.LLA(1),VT.aircraft.LLA(2),VT.aircraft.LLA(3),wgs84Ellipsoid("meter"));
+                [xdot,ydot,zdot] = ned2ecefv(nedV(1),nedV(2),nedV(3),VT.aircraft.LLA(1),VT.aircraft.LLA(2));
+                obj.unitVectors = VT.unitVectors;
+
+                obj.fullStates = [x;xdot;y;ydot;z;zdot;clockBias;clockDrift];
+            end
 
             switch type
                 case 1
                     % Time Update
-                    [obj.fullStates,obj.engineParameters] = obj.FVDM_Noise(VT.timeStep,obj.fullStates,obj.engineParameters,VT.controls,obj.aircraft);
+                    [bodyStates,engineParameters] = obj.FVDM_Noise(VT.timeStep,bodyStates,engineParameters,VT.controls,VT.aircraft);
 
                     % Numerically Calculate Jacobian
-                    obj.predictedCovariance = obj.calcPredictedCovariance(VT.timeStep);
+                    obj.covariance_minus = obj.calcPredictedCovariance(VT.timeStep,bodyStates);
 
-                    % Predict Covariance
-
+                    ECEFStates = VT.body2ECEF(bodyStates);
                     % Calculate Estimated (Predicited Pseudorange) and Estimated Carrier Frequency (Predicted Carrier Frequency)
-
-
+                    [estPsr,estCarrFreq,obj.unitVectors] = VT.GE.calcPsr(ECEFStates,VT.svStates);
 
                 case 2
                     % Measurement Update
-                    obj.y = obj.H*obj.delStates;
+
+                    infIdx = ~isinf(carrRes);
+                    carrRes = carrRes(infIdx);
+                    psrRes = psrRes(infIdx);
+
+                    idxOdd = 1:2:2*length(psrRes);
+                    idxEven = 2:2:2*length(psrRes);
+                    obj.y(idxOdd) = psrRes;
+                    obj.y(idxEven) = carrRes;
+            
+                    [obj.H,obj.R] = obj.formMeasurementMatrix(variances);
 
                     % Kalman Gain Update
                     obj.S = obj.H*obj.covariance_minus*obj.H' + obj.R;
                     obj.K = obj.covariance_minus*obj.H'*(obj.S)^-1;
 
                     % Update Estimated States
-                    obj.states_plus = obj.K*obj.y;
+                    obj.states_plus = obj.fullStates - obj.K*obj.y';
 
                     % Covariance Update
-                    obj.covariance_plus = (eye(14) - obj.K*obj.H)*obj.covariance_minus;
+                    obj.covariance_plus = (eye(size(obj.covariance_minus)) - obj.K*obj.H)*obj.covariance_minus;
 
-                    stop = 1;
+                    obj.covariance_minus = obj.covariance_plus;
+
+                    % Convert updated states back into body frame
+                    bodyStates = obj.ECEF2Body(VT,obj.states_plus,bodyStates);
+
+                    [estPsr,estCarrFreq,~] = VT.GE.calcPsr(obj.states_plus,VT.svStates);
 
             end
 
@@ -116,7 +138,7 @@ classdef NavigationProcessor < handle
             m_ib_b = engineMoments + aeroMoments + gravityMoments;
 
             % Propgating States
-            [~,state,covariance] = PropagateStates(f_ib_b,m_ib_b,Vehicle.MassProp.MOI,Vehicle.MassProp.r_cg,Vehicle.MassProp.InvMassMat,Vehicle.MassProp.Mass,state,deltaTime);
+            [~,state] = PropagateStates(f_ib_b,m_ib_b,Vehicle.MassProp.MOI,Vehicle.MassProp.r_cg,Vehicle.MassProp.InvMassMat,Vehicle.MassProp.Mass,state,deltaTime);
 
             engineParameters.propR = propR;
             engineParameters.oldFuelFlow = oldFuelFlow;
@@ -125,6 +147,8 @@ classdef NavigationProcessor < handle
 
 
         function predictedCovariance = calcPredictedCovariance(obj,deltaT,states)
+
+            J = zeros(14);
 
             u = states(1);
             v = states(2);
@@ -228,8 +252,8 @@ classdef NavigationProcessor < handle
             J(7,12) = sin(phi)*sin(psi);
 
             J(8,1) = 0;
-            J(8,2) = cos(phi)*sin(ps)*sin(theta) - w*cos(phi)*cos(ps) - v*cos(ps)*sin(phi) - sin(phi)*sin(ps)*sin(theta);
-            J(8,3) = u*cos(psi)*cos(theta) - v*cos(phi)*sin(psi) + w*sin(phi)*sin(ps) + cos(phi)*cos(psi)*sin(theta) + cos(psi)*sin(phi)*sin(theta);
+            J(8,2) = cos(phi)*sin(psi)*sin(theta) - w*cos(phi)*cos(psi) - v*cos(psi)*sin(phi) - sin(phi)*sin(psi)*sin(theta);
+            J(8,3) = u*cos(psi)*cos(theta) - v*cos(phi)*sin(psi) + w*sin(phi)*sin(psi) + cos(phi)*cos(psi)*sin(theta) + cos(psi)*sin(phi)*sin(theta);
             J(8,4) = 0;
             J(8,5) = 0;
             J(8,6) = cos(phi)*cos(theta)*sin(psi) - u*sin(psi)*sin(theta) + cos(theta)*sin(phi)*sin(psi);
@@ -251,7 +275,7 @@ classdef NavigationProcessor < handle
             J(9,9) = 0;
             J(9,10) = -sin(theta);
             J(9,11) = cos(theta)*sin(phi);
-            J(9,12) = cos(phi)*cos(theta); 
+            J(9,12) = cos(phi)*cos(theta);
 
             J(10,1) = 1;
             J(10,2) = q*cos(phi)*tan(theta) - r*sin(phi)*tan(theta);
@@ -290,10 +314,47 @@ classdef NavigationProcessor < handle
             J(12,9) = 0;
             J(12,10) = 0;
             J(12,11) = 0;
-            J(12,12) = 0;  
+            J(12,12) = 0;
 
-            stop = 1;
+            J(13,14) = 1;
 
+            phi = expm(J.*deltaT);
+
+            predictedCovariance = phi*ones(14)*phi' + obj.Q;
+            predictedCovariance = predictedCovariance(1:8,1:8);
+
+
+        end
+
+        function [H,R] = formMeasurementMatrix(obj,variances)
+
+            count = 1;
+            for i = 1:2:length(obj.y)
+                ux = obj.unitVectors(1,count);
+                uy = obj.unitVectors(2,count);
+                uz = obj.unitVectors(3,count);
+
+                H(i,1:8) = [ux 0 uy 0 uz 0 -1 0];
+                H(i+1,1:8) = [0 ux 0 uy 0 uz 0 -1];
+                R(i,i) = variances.psr(count);
+                R(i+1,i+1) = variances.carr(count);
+
+                count = count + 1;
+            end
+
+        end
+
+        function bodyStates = ECEF2Body(obj,VT,ECEFstates,bodyStates)
+
+            [N,E,D] = ecef2ned(ECEFstates(1),ECEFstates(3),ECEFstates(5),VT.aircraft.LLA(1),VT.aircraft.LLA(2),VT.aircraft.LLA(3),wgs84Ellipsoid("meter"));
+            [Nv,Ev,Dv] = ecef2nedv(ECEFstates(2),ECEFstates(4),ECEFstates(6),VT.aircraft.LLA(1),VT.aircraft.LLA(2));
+            
+            DCM_b_n = genDCM('rad',[bodyStates(12) bodyStates(11) bodyStates(10)],[3 2 1]);
+
+            posBody = DCM_b_n'*[N;E;D];
+            velBody = DCM_b_n'*[Nv;Ev;Dv];
+
+            bodyStates = [velBody;bodyStates(4:6);posBody;bodyStates(10:12)];
 
         end
     end
