@@ -6,22 +6,15 @@ classdef VectorTracking < handle
         startTime;
         endTime;
         timeSeconds;
-        ephemeris;
-        aircraft;
-        engineParameters;
-        initialStates;
-        unitVectors;
-        measStates;
-        controls;
         svStates;
-        GE;
-
+        rcvrStates;
 
     end
 
-    properties (Access = private)
-
-
+    properties (Constant, Access = private)
+        c = 299792458;
+        transmitFreq = 1575.42e6;
+        wavelength = 299792458/1575.42e6;
 
     end
 
@@ -35,16 +28,17 @@ classdef VectorTracking < handle
             obj.parseYaml(config,dirs);
 
             % Download Ephemeris File from Internet
-            obj.GE = GenerateEphemeris(obj.date,dirs);
+            rinex = GenerateEphemeris(obj.date,dirs);
 
-            start = datetime(2022,12,22,0,0,0,0);
-            stop = datetime(2022,12,22,0,6,30,0);
+            % Generate Satellite Positions for Simulation Time
+            [~,obj.svStates] = SatellitePositions(obj,rinex);
 
-            sc = satelliteScenario(start,stop,obj.timeStep,"AutoSimulate",false);
-            sat = satellite(sc,rinexread(obj.GE.rinexFilePath),"OrbitPropagator","gps");
-            [pos,vel] = states(sat,start,"CoordinateFrame","ecef")
+            % Generate Receiever Positions for Simulation Time
+            auburnLLA = [32.6099 -85.4808 232];
+            auburnECEF = lla2ecef(auburnLLA,'WGS84');
+            states = [auburnECEF(1) 0 auburnECEF(2) 0 auburnECEF(3) 0 0 0];
 
-            obj.ephemeris = obj.GE.eph;
+            obj.rcvrStates = repmat(states,size(obj.svStates,3),1);
 
         end
 
@@ -52,39 +46,41 @@ classdef VectorTracking < handle
 
             % Initialize Variables
             time = obj.startTime:obj.timeStep:obj.endTime;
-            ecef = lla2ecef([32.6099 85.4808 232],'WGS84');
-            X_m = [ecef(1) 0 ecef(2) 0 ecef(3) 0 0 0]';
+
+            X_m = (obj.rcvrStates(1,:) + randn(1,8).*[1.5 0.15 1.5 0.15 3.0 0.30 0 0])';
             P_m = diag([1.5 0.15 1.5 0.15 3.0 0.30 0 0]);
-            sv = obj.calcSVStates(0);
-            sv = obj.sortSVs(X_m,sv);
-            [estPsr,estCarrFreq,obj.unitVectors] = obj.GE.calcPsr(X_m,sv);
-            refPsr = estPsr;
-            refCarrFreq = estCarrFreq;
 
             VLL = VDFLL();
 
-            transmitTime = 0;
             for timeIdx = 1:length(time)
+                % Prediction and Propagation
+                sv = obj.svStates(:,:,timeIdx);
+                [estPsr,estCarrFreq,unitVectors] = obj.calcPsr(X_m,sv);
 
-                %% Simulating Correlators
-                [CS,psrRes,carrRes,variances] = CorrelatorSim(estPsr,estCarrFreq,refPsr,refCarrFreq);
+                [refPsr,refCarrFreq,~] = obj.calcPsr(obj.rcvrStates(timeIdx,:),sv);
+
+                % Simulating Correlators
+                [~,psrRes,carrRes,variances] = CorrelatorSim(estPsr,estCarrFreq,refPsr,refCarrFreq);
 
                 %% Navigation Processor
                 % Time Update
                 [X_m,P_m] = VLL.timeUpdate(1/50,X_m,P_m);
 
                 % Measurement Update
-                [X_p,P_p] = VLL.measurementUpdate(obj,X_m,P_m,psrRes,carrRes,variances);
+                [X_p,P_p] = VLL.measurementUpdate(X_m,P_m,psrRes,carrRes,variances,unitVectors);
                 X_m = X_p;
                 P_m = P_p;
 
-                % Prediction and Propagation
-                transmitTime = transmitTime + obj.timeStep;
-                sv = obj.calcSVStates(transmitTime);
-                sv = obj.sortSVs(X_m,sv);
-                [estPsr,estCarrFreq,obj.unitVectors] = obj.GE.calcPsr(X_m,sv);
-
+                estLLA(timeIdx,:) = ecef2lla([X_m(1) X_m(3) X_m(5)],'WGS84');
+                refLLA(timeIdx,:) = ecef2lla([obj.rcvrStates(timeIdx,1) obj.rcvrStates(timeIdx,3) obj.rcvrStates(timeIdx,5)],'WGS84');
+                estECEF(:,timeIdx) = X_m;
             end
+
+            figure
+            plot(time,estECEF(1,:));
+            hold on
+            plot(time,obj.rcvrStates(:,1))
+           
 
         end
     end
@@ -99,40 +95,40 @@ classdef VectorTracking < handle
             obj.endTime = config.aircraft.time;
             obj.date = datetime(gen.year,gen.month,gen.day);
 
-            obj.initialStates = [config.aircraft.initialState.u;...
-                config.aircraft.initialState.v;...
-                config.aircraft.initialState.w;...
-                config.aircraft.initialState.p;...
-                config.aircraft.initialState.q;...
-                config.aircraft.initialState.r;...
-                config.aircraft.initialState.x;...
-                config.aircraft.initialState.y;...
-                config.aircraft.initialState.z;...
-                config.aircraft.initialState.phi;...
-                str2num(config.aircraft.initialState.theta);...
-                str2num(config.aircraft.initialState.psi)];
+            % obj.initialStates = [config.aircraft.initialState.u;...
+            %     config.aircraft.initialState.v;...
+            %     config.aircraft.initialState.w;...
+            %     config.aircraft.initialState.p;...
+            %     config.aircraft.initialState.q;...
+            %     config.aircraft.initialState.r;...
+            %     config.aircraft.initialState.x;...
+            %     config.aircraft.initialState.y;...
+            %     config.aircraft.initialState.z;...
+            %     config.aircraft.initialState.phi;...
+            %     str2num(config.aircraft.initialState.theta);...
+            %     str2num(config.aircraft.initialState.psi)];
 
             Vehicle = load("DA40.mat");
             BSFC_LUT = load("DA40ENGINE.mat");
             STGeometry = load("DA40STGEOM.mat");
             selWaypoints = load(sprintf('%s.mat',config.aircraft.waypoints));
 
-            obj.aircraft.LLA = [selWaypoints.refLL -obj.initialStates(9)];
-            obj.aircraft.BSFC_LUT = BSFC_LUT.BSFC_LUT;
-            obj.aircraft.Vehicle = Vehicle.Vehicle;
-            obj.aircraft.STGeometry = STGeometry.ST_Geometry;
-            obj.aircraft.lookaheadDist = config.aircraft.lookaheadDistance;
-            obj.aircraft.waypoints = selWaypoints.waypoints;
-            obj.aircraft.engineForcesVAR = config.noise.engineForcesVAR;
-            obj.aircraft.engineMomentsVAR = config.noise.engineMomentsVAR;
-            obj.aircraft.aeroForcesVAR = config.noise.aeroForcesVAR;
-            obj.aircraft.aeroMomentsVAR = config.noise.aeroMomentsVAR;
-            obj.aircraft.gravityForcesVAR = config.noise.gravityForcesVAR;
-            obj.aircraft.gravityMomentsVAR = config.noise.gravityMomentsVAR;
-
-            obj.engineParameters.oldFuelFlow = 0;
-            obj.engineParameters.oldShaftPower = 0;
-            obj.engineParameters.propR = 200;
+            % obj.aircraft.LLA = [selWaypoints.refLL -obj.initialStates(9)];
+            % obj.aircraft.BSFC_LUT = BSFC_LUT.BSFC_LUT;
+            % obj.aircraft.Vehicle = Vehicle.Vehicle;
+            % obj.aircraft.STGeometry = STGeometry.ST_Geometry;
+            % obj.aircraft.lookaheadDist = config.aircraft.lookaheadDistance;
+            % obj.aircraft.waypoints = selWaypoints.waypoints;
+            % obj.aircraft.engineForcesVAR = config.noise.engineForcesVAR;
+            % obj.aircraft.engineMomentsVAR = config.noise.engineMomentsVAR;
+            % obj.aircraft.aeroForcesVAR = config.noise.aeroForcesVAR;
+            % obj.aircraft.aeroMomentsVAR = config.noise.aeroMomentsVAR;
+            % obj.aircraft.gravityForcesVAR = config.noise.gravityForcesVAR;
+            % obj.aircraft.gravityMomentsVAR = config.noise.gravityMomentsVAR;
+            %
+            % obj.engineParameters.oldFuelFlow = 0;
+            % obj.engineParameters.oldShaftPower = 0;
+            % obj.engineParameters.propR = 200;
 
 
 
@@ -243,6 +239,35 @@ classdef VectorTracking < handle
             [~,el,~] = ecef2aer(svX,svY,svZ,LLA(1),LLA(2),LLA(3),wgs84Ellipsoid("meter"));
 
             svs = svs(:,el > 10);
+        end
+
+        function [psr,carrFreq,unitVectors] = calcPsr(obj,usrStates, svStates)
+
+            dx = (svStates(1,:) - usrStates(1));
+            dy = (svStates(3,:) - usrStates(3));
+            dz = (svStates(5,:) - usrStates(5));
+            usrVel = [usrStates(2);usrStates(4);usrStates(6)];
+            svVel = [svStates(2,:); svStates(4,:); svStates(6,:)];
+
+            range = sqrt(dx.^2 + dy.^2 + dz.^2);
+
+            psr = range + obj.c*svStates(7,:);
+            unitVectors = [dx./range; dy./range; dz./range];
+
+            for i = 1:length(psr)
+
+                carrFreq(i) = obj.transmitFreq - obj.wavelength*(svVel(:,i)'*unitVectors(:,i)) + obj.wavelength*(usrVel'*unitVectors(:,i));
+
+            end
+
+            % Discard any satellites with a negative elevation
+            LLA = ecef2lla([usrStates(1) usrStates(3) usrStates(5)]);
+            [~,el,~] = ecef2aer(svStates(1,:),svStates(3,:),svStates(5,:),LLA(1),LLA(2),LLA(3),wgs84Ellipsoid("meter"));
+
+            psr = psr(1,el > 0);
+            carrFreq = carrFreq(1,el > 0);
+            unitVectors = unitVectors(:,el > 0);
+
         end
 
     end

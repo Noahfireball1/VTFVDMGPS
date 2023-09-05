@@ -47,15 +47,7 @@ classdef VDFLL < handle
 
         end
 
-        function [X_p,P_p] = measurementUpdate(obj,VT,X_m,P_m,psrRes,carrRes,variances)
-
-            infIdx = ~isinf(carrRes);
-            carrRes = carrRes(infIdx);
-            psrRes = psrRes(infIdx);
-
-            variances.psr = variances.psr(infIdx);
-            variances.carr = variances.carr(infIdx);
-            unitVectors = VT.unitVectors(:,infIdx);
+        function [X_p,P_p] = measurementUpdate(obj,X_m,P_m,psrRes,carrRes,variances,unitVectors)
 
             obj.formMeasurementMatrix(variances,unitVectors);
 
