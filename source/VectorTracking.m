@@ -36,6 +36,14 @@ classdef VectorTracking < handle
 
             % Download Ephemeris File from Internet
             obj.GE = GenerateEphemeris(obj.date,dirs);
+
+            start = datetime(2022,12,22,0,0,0,0);
+            stop = datetime(2022,12,22,0,6,30,0);
+
+            sc = satelliteScenario(start,stop,obj.timeStep,"AutoSimulate",false);
+            sat = satellite(sc,rinexread(obj.GE.rinexFilePath),"OrbitPropagator","gps");
+            [pos,vel] = states(sat,start,"CoordinateFrame","ecef")
+
             obj.ephemeris = obj.GE.eph;
 
         end
@@ -44,49 +52,24 @@ classdef VectorTracking < handle
 
             % Initialize Variables
             time = obj.startTime:obj.timeStep:obj.endTime;
-            measTime = obj.startTime:1/50:obj.endTime;
-            [estPsr,estCarrFreq,uV] = obj.initialization;
-
-            WaypointFollower = uavWaypointFollower('UAVType','fixed-wing','StartFrom','first','Waypoints',flipud(obj.aircraft.waypoints),'TransitionRadius',1000);
-            state = obj.initialStates;
-            obj.unitVectors = uV;
+            ecef = lla2ecef([32.6099 85.4808 232],'WGS84');
+            X_m = [ecef(1) 0 ecef(2) 0 ecef(3) 0 0 0]';
+            P_m = diag([1.5 0.15 1.5 0.15 3.0 0.30 0 0]);
+            sv = obj.calcSVStates(0);
+            sv = obj.sortSVs(X_m,sv);
+            [estPsr,estCarrFreq,obj.unitVectors] = obj.GE.calcPsr(X_m,sv);
+            refPsr = estPsr;
+            refCarrFreq = estCarrFreq;
 
             VLL = VDFLL();
 
-            bodyStates = obj.initialStates;
-
-            body2ned = genDCM('rad',[bodyStates(12) bodyStates(11) bodyStates(10)],[3 2 1]);
-            nedP = body2ned*obj.initialStates(7:9);
-            nedV = body2ned*obj.initialStates(1:3);
-            clockBias = 0;
-            clockDrift = 0;
-
-            [x,y,z] = ned2ecef(nedP(1),nedP(2),nedP(3),obj.aircraft.LLA(1),obj.aircraft.LLA(2),obj.aircraft.LLA(3),wgs84Ellipsoid("meter"));
-            [xdot,ydot,zdot] = ned2ecefv(nedV(1),nedV(2),nedV(3),obj.aircraft.LLA(1),obj.aircraft.LLA(2));
-
-            X_m = [x;xdot;y;ydot;z;zdot;clockBias;clockDrift];
-            P_m = zeros(8);
             transmitTime = 0;
-
-            measIdx = 1;
             for timeIdx = 1:length(time)
 
-                %% Generating Measurement States and Controls
-                [state,obj.engineParameters,trueControls] = FVDM_Truth(obj.timeStep,state,obj.engineParameters,WaypointFollower,obj.aircraft);
-                obj.measStates = state;
-                ecefStates = obj.body2ECEF(obj.measStates);
-                sv = obj.calcSVStates(transmitTime);
-                obj.controls = trueControls;
-
-                % Modify svStates to only be satellites in-view
-                sv = obj.sortSVs(ecefStates,sv);
-
                 %% Simulating Correlators
-                [CS,psrRes,carrRes,variances] = CorrelatorSim(obj,estPsr,estCarrFreq,sv);
-
+                [CS,psrRes,carrRes,variances] = CorrelatorSim(estPsr,estCarrFreq,refPsr,refCarrFreq);
 
                 %% Navigation Processor
-
                 % Time Update
                 [X_m,P_m] = VLL.timeUpdate(1/50,X_m,P_m);
 
@@ -96,7 +79,7 @@ classdef VectorTracking < handle
                 P_m = P_p;
 
                 % Prediction and Propagation
-                transmitTime = transmitTime + time(timeIdx);
+                transmitTime = transmitTime + obj.timeStep;
                 sv = obj.calcSVStates(transmitTime);
                 sv = obj.sortSVs(X_m,sv);
                 [estPsr,estCarrFreq,obj.unitVectors] = obj.GE.calcPsr(X_m,sv);
@@ -150,6 +133,8 @@ classdef VectorTracking < handle
             obj.engineParameters.oldFuelFlow = 0;
             obj.engineParameters.oldShaftPower = 0;
             obj.engineParameters.propR = 200;
+
+
 
 
         end

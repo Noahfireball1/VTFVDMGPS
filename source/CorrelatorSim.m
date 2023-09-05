@@ -13,20 +13,11 @@ classdef CorrelatorSim < handle
     end
 
     methods
-        function [obj,psrRes,carrRes,variances] = CorrelatorSim(VT,estPsr,estCarrFreq,sv)
-
-            % Propagate Measurement States
-            statesBody = VT.measStates;
-            statesECEF = VT.body2ECEF(statesBody);
-            statesECEF = [statesECEF 0] + randn(1,7).*[1.5 0.15 1.5 0.15 3.0 0.3 0];
-
-            % Calculate Measured Pseudoranges, Carrier Frequencies
-            [measPsr,measCarrFreq] = VT.GE.calcPsr(statesECEF,sv);
-
+        function [obj,psrRes,carrRes,variances] = CorrelatorSim(estPsr,estCarrFreq,refPsr,refCarrFreq)
 
             % Calculate Carrier Frequency and Code Phase Errors
-            [midCarrFreqError,midCodePhaseError] = obj.calcErrors(measPsr,measCarrFreq,estPsr,estCarrFreq,2);
-            [carrFreqError,codePhaseError] = obj.calcErrors(measPsr,measCarrFreq,estPsr,estCarrFreq,1);
+            [midCarrFreqError,midCodePhaseError] = obj.calcErrors(refPsr,refCarrFreq,estPsr,estCarrFreq,2);
+            [carrFreqError,codePhaseError] = obj.calcErrors(refPsr,refCarrFreq,estPsr,estCarrFreq,1);
 
             % Calculate Correlators
             whiteNoise = randn(6,1);
@@ -47,8 +38,6 @@ classdef CorrelatorSim < handle
 
             % Calculating Variances for Measurement Update
             variances = obj.calcResVariances(psrRes,R);
-
-
 
         end
 
