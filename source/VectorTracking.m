@@ -6,8 +6,14 @@ classdef VectorTracking < handle
         startTime;
         endTime;
         timeSeconds;
+        initialStates;
         svStates;
         rcvrStates;
+
+    end
+
+    properties (Access = private)
+        RP;
 
     end
 
@@ -34,11 +40,7 @@ classdef VectorTracking < handle
             [~,obj.svStates] = SatellitePositions(obj,rinex);
 
             % Generate Receiever Positions for Simulation Time
-            auburnLLA = [32.6099 -85.4808 232];
-            auburnECEF = lla2ecef(auburnLLA,'WGS84');
-            states = [auburnECEF(1) 0 auburnECEF(2) 0 auburnECEF(3) 0 0 0];
-
-            obj.rcvrStates = repmat(states,size(obj.svStates,3),1);
+            [obj.rcvrStates,~] = obj.RP.genRCVRStates(obj.initialStates);
 
         end
 
@@ -47,17 +49,20 @@ classdef VectorTracking < handle
             % Initialize Variables
             time = obj.startTime:obj.timeStep:obj.endTime;
 
-            X_m = (obj.rcvrStates(1,:) + randn(1,8).*[1.5 0.15 1.5 0.15 3.0 0.30 0 0])';
+            X_m = (obj.rcvrStates(:,1));
             P_m = diag([1.5 0.15 1.5 0.15 3.0 0.30 0 0]);
 
             VLL = VDFLL();
 
+            upd = utilities.progressbar.textprogressbar(length(time),'startmsg','');
             for timeIdx = 1:length(time)
+                upd(timeIdx)
                 % Prediction and Propagation
                 sv = obj.svStates(:,:,timeIdx);
                 [estPsr,estCarrFreq,unitVectors] = obj.calcPsr(X_m,sv);
 
-                [refPsr,refCarrFreq,~] = obj.calcPsr(obj.rcvrStates(timeIdx,:),sv);
+                refStates = obj.rcvrStates(:,timeIdx);
+                [refPsr,refCarrFreq,~] = obj.calcPsr(refStates,sv);
 
                 % Simulating Correlators
                 [~,psrRes,carrRes,variances] = CorrelatorSim(estPsr,estCarrFreq,refPsr,refCarrFreq);
@@ -72,14 +77,21 @@ classdef VectorTracking < handle
                 P_m = P_p;
 
                 estLLA(timeIdx,:) = ecef2lla([X_m(1) X_m(3) X_m(5)],'WGS84');
-                refLLA(timeIdx,:) = ecef2lla([obj.rcvrStates(timeIdx,1) obj.rcvrStates(timeIdx,3) obj.rcvrStates(timeIdx,5)],'WGS84');
+                refLLA(timeIdx,:) = ecef2lla([refStates(1) refStates(3) refStates(5)],'WGS84');
                 estECEF(:,timeIdx) = X_m;
             end
 
             figure
-            plot(time,estECEF(1,:));
-            hold on
-            plot(time,obj.rcvrStates(:,1))
+            tiledlayout(3,1)
+
+            nexttile
+            plot(time,estECEF(1,:) - obj.rcvrStates(1,:)');
+
+            nexttile
+            plot(time,estECEF(3,:) - obj.rcvrStates(3,:)');
+            
+            nexttile
+            plot(time,estECEF(5,:) - obj.rcvrStates(5,:)');
            
 
         end
@@ -90,34 +102,34 @@ classdef VectorTracking < handle
 
             gen = config.general;
 
-            obj.timeStep = 1/config.aircraft.frequency;
+            obj.timeStep = 1/50;
             obj.startTime = 0;
             obj.endTime = config.aircraft.time;
             obj.date = datetime(gen.year,gen.month,gen.day);
 
-            % obj.initialStates = [config.aircraft.initialState.u;...
-            %     config.aircraft.initialState.v;...
-            %     config.aircraft.initialState.w;...
-            %     config.aircraft.initialState.p;...
-            %     config.aircraft.initialState.q;...
-            %     config.aircraft.initialState.r;...
-            %     config.aircraft.initialState.x;...
-            %     config.aircraft.initialState.y;...
-            %     config.aircraft.initialState.z;...
-            %     config.aircraft.initialState.phi;...
-            %     str2num(config.aircraft.initialState.theta);...
-            %     str2num(config.aircraft.initialState.psi)];
+            obj.initialStates = [config.aircraft.initialState.u;...
+                config.aircraft.initialState.v;...
+                config.aircraft.initialState.w;...
+                config.aircraft.initialState.p;...
+                config.aircraft.initialState.q;...
+                config.aircraft.initialState.r;...
+                config.aircraft.initialState.x;...
+                config.aircraft.initialState.y;...
+                config.aircraft.initialState.z;...
+                config.aircraft.initialState.phi;...
+                str2num(config.aircraft.initialState.theta);...
+                str2num(config.aircraft.initialState.psi)];
 
             Vehicle = load("DA40.mat");
             BSFC_LUT = load("DA40ENGINE.mat");
             STGeometry = load("DA40STGEOM.mat");
             selWaypoints = load(sprintf('%s.mat',config.aircraft.waypoints));
 
-            % obj.aircraft.LLA = [selWaypoints.refLL -obj.initialStates(9)];
-            % obj.aircraft.BSFC_LUT = BSFC_LUT.BSFC_LUT;
-            % obj.aircraft.Vehicle = Vehicle.Vehicle;
-            % obj.aircraft.STGeometry = STGeometry.ST_Geometry;
-            % obj.aircraft.lookaheadDist = config.aircraft.lookaheadDistance;
+            aircraft.LLA = [selWaypoints.refLL -obj.initialStates(9)];
+            aircraft.BSFC_LUT = BSFC_LUT.BSFC_LUT;
+            aircraft.Vehicle = Vehicle.Vehicle;
+            aircraft.STGeometry = STGeometry.ST_Geometry;
+            aircraft.lookaheadDist = config.aircraft.lookaheadDistance;
             % obj.aircraft.waypoints = selWaypoints.waypoints;
             % obj.aircraft.engineForcesVAR = config.noise.engineForcesVAR;
             % obj.aircraft.engineMomentsVAR = config.noise.engineMomentsVAR;
@@ -130,8 +142,7 @@ classdef VectorTracking < handle
             % obj.engineParameters.oldShaftPower = 0;
             % obj.engineParameters.propR = 200;
 
-
-
+            obj.RP = ReceiverPositions(obj.startTime,obj.endTime,obj.timeStep,selWaypoints.waypoints,aircraft);
 
         end
 
@@ -216,17 +227,6 @@ classdef VectorTracking < handle
     end
 
     methods (Access = public)
-        function states_ECEF = body2ECEF(obj,state)
-            DCM_b_n = genDCM('rad',state(10:12),[3 2 1]);
-
-            pos_NED = DCM_b_n*state(7:9);
-            vel_NED = DCM_b_n*state(1:3);
-
-            [x,y,z] = ned2ecef(pos_NED(1),pos_NED(2),pos_NED(3),obj.aircraft.LLA(1),obj.aircraft.LLA(2),0,wgs84Ellipsoid("meter"),"degrees");
-            [u,v,w] = ned2ecefv(vel_NED(1),vel_NED(2),vel_NED(3),obj.aircraft.LLA(1),obj.aircraft.LLA(2),"degrees");
-
-            states_ECEF = [x,u,y,v,z,w];
-        end
 
         function svs = sortSVs(obj,states,svs)
 

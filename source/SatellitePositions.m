@@ -3,14 +3,14 @@ classdef SatellitePositions < handle
     methods
         function [obj,svStates] = SatellitePositions(VT,rinex)
 
-            timeVector = 0:VT.timeStep:VT.endTime;
+            timeArray = 0:VT.timeStep:VT.endTime;
 
-            dayVector = repmat(day(VT.date),length(timeVector),1);
-            monthVector = repmat(month(VT.date),length(timeVector),1);
-            yearVector = repmat(year(VT.date),length(timeVector),1);
-            hourVector = zeros(length(timeVector),1);
-            minuteVector = zeros(length(timeVector),1);
-            secondVector = timeVector';
+            dayVector = repmat(day(VT.date),length(timeArray),1);
+            monthVector = repmat(month(VT.date),length(timeArray),1);
+            yearVector = repmat(year(VT.date),length(timeArray),1);
+            hourVector = zeros(length(timeArray),1);
+            minuteVector = zeros(length(timeArray),1);
+            secondVector = timeArray';
 
             dateVector = [yearVector monthVector dayVector hourVector minuteVector secondVector];
 
@@ -19,7 +19,10 @@ classdef SatellitePositions < handle
             [~,satIdx] = unique(data.SatelliteID);
             data = data(satIdx,:);
 
-            for i = 1:length(timeVector)
+            utilities.printText.options(6);
+            upd = utilities.progressbar.textprogressbar(length(timeArray),'startmsg','');
+            for i = 1:length(timeArray)
+                upd(i)
                 [satPos,satVel,satID] = gnssconstellation(dateTimeVector(i),data,"GNSSFileType","RINEX");
 
                 svStates(:,:,i) = [satPos(:,1)';satVel(:,1)';satPos(:,2)';satVel(:,2)';satPos(:,3)';satVel(:,3)';zeros(1,length(satID))];

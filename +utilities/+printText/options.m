@@ -18,6 +18,14 @@ switch option
     case 4
         utilities.cprintf(programStyle,'[VTFVDMGPS]\t')
         utilities.cprintf(textStyle, 'Vector tracking receiver successfully configured. Starting...\n')
+
+    case 5
+        utilities.cprintf(programStyle,'[VTFVDMGPS]\t')
+        utilities.cprintf(textStyle, 'Simulating reciever positons for configured length of time...\n\t\t\t')
+
+    case 6
+        utilities.cprintf(programStyle,'[VTFVDMGPS]\t')
+        utilities.cprintf(textStyle, 'Simulating satellites positons for configured length of time...\n\t\t\t')
     otherwise
 end
 end
