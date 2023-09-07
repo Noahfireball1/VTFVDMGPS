@@ -21,11 +21,11 @@ switch option
 
     case 5
         utilities.cprintf(programStyle,'[VTFVDMGPS]\t')
-        utilities.cprintf(textStyle, 'Simulating reciever positons for configured length of time...\n\t\t\t')
+        utilities.cprintf(textStyle, 'Simulating reciever positions for configured length of time...\n\t\t\t')
 
     case 6
         utilities.cprintf(programStyle,'[VTFVDMGPS]\t')
-        utilities.cprintf(textStyle, 'Simulating satellites positons for configured length of time...\n\t\t\t')
+        utilities.cprintf(textStyle, 'Simulating satellites positions for configured length of time...\n\t\t\t')
     otherwise
 end
 end

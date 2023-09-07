@@ -3,7 +3,7 @@ classdef PropagateStates < handle
     %   Detailed explanation goes here
 
     methods
-        function [obj,state,covariance] = PropagateStates(f_ib_b,m_ib_b,MOI,cg,invMassMatrix,mass,state,timeStep)
+        function [obj,X_Dot] = PropagateStates(f_ib_b,m_ib_b,MOI,cg,invMassMatrix,mass,state,timeStep)
 
             u = state(1);
             v = state(2);
@@ -40,12 +40,6 @@ classdef PropagateStates < handle
             thdot = q*cos(phi) - r*sin(phi);
             psidot = q*sin(phi)/cos(theta) + r*cos(phi)/cos(theta);
             X_Dot(7:12) = [xdot;ydot;zdot;phidot;thdot;psidot];
-
-            covariance = obj.calcCovariance(MOI,cg,invMassMatrix,mass,timeStep,state);
-
-            state = X_Dot'*timeStep + state;
-
-
 
         end
 

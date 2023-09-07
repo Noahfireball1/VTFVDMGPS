@@ -36,12 +36,25 @@ classdef VectorTracking < handle
             % Download Ephemeris File from Internet
             rinex = GenerateEphemeris(obj.date,dirs);
 
-            % Generate Satellite Positions for Simulation Time
-            [~,obj.svStates] = SatellitePositions(obj,rinex);
+            if ~exist(append(dirs.dataFVDM,'svStates.mat'),'file')
+                % Generate Satellite Positions for Simulation Time
+                [~,satStates] = SatellitePositions(obj,rinex);
+                save(append(dirs.dataFVDM,'svStates.mat'),"satStates")
+                obj.svStates = satStates;
+            else
+                load(append(dirs.dataFVDM,'svStates.mat'))
+                obj.svStates = satStates;
+            end
 
-            % Generate Receiever Positions for Simulation Time
-            [obj.rcvrStates,~] = obj.RP.genRCVRStates(obj.initialStates);
-
+            if ~exist(append(dirs.dataFVDM,'rcvrStates.mat'),'file')
+                % Generate Receiever Positions for Simulation Time
+                [recStates,~] = obj.RP.genRCVRStates(obj.initialStates);
+                save(append(dirs.dataFVDM,'rcvrStates.mat'),"recStates")
+                obj.rcvrStates = recStates;
+            else
+                load(append(dirs.dataFVDM,'rcvrStates.mat'))
+                obj.rcvrStates = recStates;
+            end
         end
 
         function process(obj)
@@ -50,7 +63,7 @@ classdef VectorTracking < handle
             time = obj.startTime:obj.timeStep:obj.endTime;
 
             X_m = (obj.rcvrStates(:,1));
-            P_m = diag([1.5 0.15 1.5 0.15 3.0 0.30 0 0]);
+            P_m = diag([1.5 0.15 0.015 1.5 0.15 0.015 3.0 0.30 0.030 0 0]);
 
             VLL = VDFLL();
 
@@ -85,14 +98,14 @@ classdef VectorTracking < handle
             tiledlayout(3,1)
 
             nexttile
-            plot(time,estECEF(1,:) - obj.rcvrStates(1,:)');
+            plot(time,estECEF(1,:) - obj.rcvrStates(1,:));
 
             nexttile
-            plot(time,estECEF(3,:) - obj.rcvrStates(3,:)');
-            
+            plot(time,estECEF(3,:) - obj.rcvrStates(3,:));
+
             nexttile
-            plot(time,estECEF(5,:) - obj.rcvrStates(5,:)');
-           
+            plot(time,estECEF(5,:) - obj.rcvrStates(5,:));
+
 
         end
     end
