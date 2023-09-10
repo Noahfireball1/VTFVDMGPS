@@ -23,6 +23,9 @@ inputFilePath = append(dir.config,inputFile);
 DCAM = VectorTracking(inputFilePath,dir);
 % plotDCAM = VectorTrackingPlotting(inputFilePath,dir);
 
-%% Start Vector Tracking
+%% Calculate reference Psuedoranges and Carrier Frequencies
 utilities.printText.options(4)
-process(DCAM);
+[refPsr,refCarr] = process(DCAM);
+
+%% Start Vector Tracking
+initializeSim;
