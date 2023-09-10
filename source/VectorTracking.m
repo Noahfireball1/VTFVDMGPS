@@ -36,15 +36,12 @@ classdef VectorTracking < handle
             % Download Ephemeris File from Internet
             rinex = GenerateEphemeris(obj.date,dirs);
 
-            if ~exist(append(dirs.dataFVDM,'svStates.mat'),'file')
-                % Generate Satellite Positions for Simulation Time
-                [~,satStates] = SatellitePositions(obj,rinex);
-                save(append(dirs.dataFVDM,'svStates.mat'),"satStates")
-                obj.svStates = satStates;
-            else
-                load(append(dirs.dataFVDM,'svStates.mat'))
-                obj.svStates = satStates;
-            end
+            % Generate Satellite Positions for Simulation Time
+            [~,obj.svStates] = SatellitePositions(obj,rinex);
+
+            % Generate Receiever Positions for Simulation Time
+            load("rcvr_Scurve.mat")
+            obj.rcvrStates = rcvrStates;
 
             if ~exist(append(dirs.dataFVDM,'rcvrStates.mat'),'file')
                 % Generate Receiever Positions for Simulation Time
@@ -57,55 +54,19 @@ classdef VectorTracking < handle
             end
         end
 
-        function process(obj)
+        function [refPsr,refCarrFreq] = process(obj)
 
-            % Initialize Variables
             time = obj.startTime:obj.timeStep:obj.endTime;
 
-            X_m = (obj.rcvrStates(:,1));
-            P_m = diag([1.5 0.15 0.015 1.5 0.15 0.015 3.0 0.30 0.030 0 0]);
-
-            VLL = VDFLL();
-
-            upd = utilities.progressbar.textprogressbar(length(time),'startmsg','');
             for timeIdx = 1:length(time)
                 upd(timeIdx)
                 % Prediction and Propagation
                 sv = obj.svStates(:,:,timeIdx);
-                [estPsr,estCarrFreq,unitVectors] = obj.calcPsr(X_m,sv);
+                refStates = obj.rcvrStates(:,timeIdx) + randn(8,1).*[1.5 0.15 1.5 0.15 3.0 0.3 0 0]';
 
-                refStates = obj.rcvrStates(:,timeIdx);
-                [refPsr,refCarrFreq,~] = obj.calcPsr(refStates,sv);
+                [refPsr(:,timeIdx),refCarrFreq(:,timeIdx),~] = obj.calcPsr(refStates,sv);
 
-                % Simulating Correlators
-                [~,psrRes,carrRes,variances] = CorrelatorSim(estPsr,estCarrFreq,refPsr,refCarrFreq);
-
-                %% Navigation Processor
-                % Time Update
-                [X_m,P_m] = VLL.timeUpdate(1/50,X_m,P_m);
-
-                % Measurement Update
-                [X_p,P_p] = VLL.measurementUpdate(X_m,P_m,psrRes,carrRes,variances,unitVectors);
-                X_m = X_p;
-                P_m = P_p;
-
-                estLLA(timeIdx,:) = ecef2lla([X_m(1) X_m(3) X_m(5)],'WGS84');
-                refLLA(timeIdx,:) = ecef2lla([refStates(1) refStates(3) refStates(5)],'WGS84');
-                estECEF(:,timeIdx) = X_m;
-            end
-
-            figure
-            tiledlayout(3,1)
-
-            nexttile
-            plot(time,estECEF(1,:) - obj.rcvrStates(1,:));
-
-            nexttile
-            plot(time,estECEF(3,:) - obj.rcvrStates(3,:));
-
-            nexttile
-            plot(time,estECEF(5,:) - obj.rcvrStates(5,:));
-
+            end       
 
         end
     end
@@ -119,43 +80,6 @@ classdef VectorTracking < handle
             obj.startTime = 0;
             obj.endTime = config.aircraft.time;
             obj.date = datetime(gen.year,gen.month,gen.day);
-
-            obj.initialStates = [config.aircraft.initialState.u;...
-                config.aircraft.initialState.v;...
-                config.aircraft.initialState.w;...
-                config.aircraft.initialState.p;...
-                config.aircraft.initialState.q;...
-                config.aircraft.initialState.r;...
-                config.aircraft.initialState.x;...
-                config.aircraft.initialState.y;...
-                config.aircraft.initialState.z;...
-                config.aircraft.initialState.phi;...
-                str2num(config.aircraft.initialState.theta);...
-                str2num(config.aircraft.initialState.psi)];
-
-            Vehicle = load("DA40.mat");
-            BSFC_LUT = load("DA40ENGINE.mat");
-            STGeometry = load("DA40STGEOM.mat");
-            selWaypoints = load(sprintf('%s.mat',config.aircraft.waypoints));
-
-            aircraft.LLA = [selWaypoints.refLL -obj.initialStates(9)];
-            aircraft.BSFC_LUT = BSFC_LUT.BSFC_LUT;
-            aircraft.Vehicle = Vehicle.Vehicle;
-            aircraft.STGeometry = STGeometry.ST_Geometry;
-            aircraft.lookaheadDist = config.aircraft.lookaheadDistance;
-            % obj.aircraft.waypoints = selWaypoints.waypoints;
-            % obj.aircraft.engineForcesVAR = config.noise.engineForcesVAR;
-            % obj.aircraft.engineMomentsVAR = config.noise.engineMomentsVAR;
-            % obj.aircraft.aeroForcesVAR = config.noise.aeroForcesVAR;
-            % obj.aircraft.aeroMomentsVAR = config.noise.aeroMomentsVAR;
-            % obj.aircraft.gravityForcesVAR = config.noise.gravityForcesVAR;
-            % obj.aircraft.gravityMomentsVAR = config.noise.gravityMomentsVAR;
-            %
-            % obj.engineParameters.oldFuelFlow = 0;
-            % obj.engineParameters.oldShaftPower = 0;
-            % obj.engineParameters.propR = 200;
-
-            obj.RP = ReceiverPositions(obj.startTime,obj.endTime,obj.timeStep,selWaypoints.waypoints,aircraft);
 
         end
 
