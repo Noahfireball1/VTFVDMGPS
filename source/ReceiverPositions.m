@@ -17,7 +17,7 @@ classdef ReceiverPositions < handle
     end
 
     methods
-        function obj = ReceiverPositions(startTime,stopTime,timestep,waypoints,aircraft)
+        function obj = ReceiverPositions(startTime,stopTime,timestep,aircraft)
 
             obj.startTime = startTime;
             obj.stopTime = stopTime;
@@ -25,7 +25,6 @@ classdef ReceiverPositions < handle
             obj.engineParameters.propR = 400;
             obj.engineParameters.oldFuelFlow = 0;
             obj.engineParameters.oldShaftPower = 0;
-            obj.WaypointFollower = uavWaypointFollower("UAVType","fixed-wing","StartFrom","first","Waypoints",waypoints,"TransitionRadius",50);
             obj.aircraft = aircraft;
 
         end
@@ -49,7 +48,7 @@ classdef ReceiverPositions < handle
 
         end
 
-        function [augmentedState,controls] = FVDM_Truth(obj,state)
+        function state = noiseFVDM(obj,state,controls)
             propR = obj.engineParameters.propR;
             oldFuelFlow = obj.engineParameters.oldFuelFlow;
             oldShaftPower = obj.engineParameters.oldShaftPower;
@@ -63,22 +62,10 @@ classdef ReceiverPositions < handle
             LLA = flat2lla(state(7:9)',refLLA(1:2),0,0);
             atmos = Environment('Truth',LLA(1),LLA(2),LLA(3),[],[]);
 
-            % Calculate Controller Reference Values
-            [lookaheadPoint,desiredCourse,~,~,~,~] = obj.WaypointFollower([state(7:9);state(12)],obj.aircraft.lookaheadDist);
-            desiredCourse = wrapTo2Pi(desiredCourse);
-            % Calculate Controller Commands
-            % latStick = calcLateralStickCommand(desiredCourse,state);
-            % longStick = calcLongitudinalStickCommand(lookaheadPoint,state);
-            % pedalPosn = calcPedalPosnCommand(atmos,state);
-            % throttle = calcThrottleCommand(70,state);
-
-            latStick = 0;
-            longStick = 0;
-            pedalPosn = 0;
-            throttle = 1;
-
-            controls = [latStick,longStick,pedalPosn,throttle];
-
+            throttle = controls(4);
+            longStick = controls(2);
+            latStick = controls(1);
+            pedalPosn = controls(3);
 
             % Propagate Engine and Prop Forces/Moments
             [~,engineForces,engineMoments,propR,oldFuelFlow,oldShaftPower] = PropagateEngine(atmos,state,throttle,propR,obj.timeStep,BSFC_LUT,oldFuelFlow,oldShaftPower);
@@ -95,8 +82,7 @@ classdef ReceiverPositions < handle
 
             % Propgating States
             [~,X_dot] = PropagateStates(f_ib_b,m_ib_b,Vehicle.MassProp.MOI,Vehicle.MassProp.r_cg,Vehicle.MassProp.InvMassMat,Vehicle.MassProp.Mass,state,obj.timeStep);
-            state = X_dot'*obj.timeStep + state;
-            augmentedState = [X_dot(1:3)';state];
+            state = X_dot*obj.timeStep + state;
 
 
             obj.engineParameters.propR = propR;
@@ -106,17 +92,22 @@ classdef ReceiverPositions < handle
 
         function rcvrStates = body2ecef(obj,states)
 
-            DCM_b_n = genDCM('rad',[states(15) states(14) states(13)],[3 2 1]);
+            DCM_b_n = genDCM('rad',[states(12) states(11) states(10)],[3 2 1]);
 
-            pos_NED = DCM_b_n*states(10:12);
-            vel_NED = DCM_b_n*states(4:6);
-            acc_NED = DCM_b_n*states(1:3);
+            pos_NED = DCM_b_n*states(7:9);
+            vel_NED = DCM_b_n*states(1:3);
+        
 
             [x,y,z] = ned2ecef(pos_NED(1),pos_NED(2),pos_NED(3),obj.aircraft.LLA(1),obj.aircraft.LLA(2),0,wgs84Ellipsoid("meter"),"degrees");
             [u,v,w] = ned2ecefv(vel_NED(1),vel_NED(2),vel_NED(3),obj.aircraft.LLA(1),obj.aircraft.LLA(2),"degrees");
-            [ax,ay,az] = ned2ecefv(acc_NED(1),acc_NED(2),acc_NED(3),obj.aircraft.LLA(1),obj.aircraft.LLA(2),"degrees");
+     
 
-            rcvrStates = [x,u,ax,y,v,ay,z,w,az,0,0];
+            rcvrStates = [x,u,y,v,z,w,0,0];
+
+        end
+
+        function cov = covariance(obj,p_m,bodyStates)
+            stop = 1;
 
         end
     end

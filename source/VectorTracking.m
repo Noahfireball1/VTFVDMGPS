@@ -9,10 +9,7 @@ classdef VectorTracking < handle
         initialStates;
         svStates;
         rcvrStates;
-
-    end
-
-    properties (Access = private)
+        controls;
         RP;
 
     end
@@ -51,22 +48,45 @@ classdef VectorTracking < handle
             else
                 load(append(dirs.dataFVDM,'rcvrStates.mat'))
                 obj.rcvrStates = recStates;
+                obj.controls = controls;
             end
+
         end
 
         function [refPsr,refCarrFreq] = process(obj)
 
             time = obj.startTime:obj.timeStep:obj.endTime;
-
+            measTime = 0:1/50:time(end);
+            measIdx = 1;
+            x_m = obj.initialStates;
+            p_m = zeros(14);
             for timeIdx = 1:length(time)
-                upd(timeIdx)
+
+                % Time Update
+                cont = obj.controls(:,measIdx);
+                bodyStates = obj.RP.noiseFVDM(x_m,cont);
+
+                x_m = obj.RP.body2ecef(bodyStates);
+                p_m = obj.RP.covariance(p_m);
+
+                % Measurement Update
+                if (measTime(measIdx) - time(timeIdx)) ~= 0
+                    return
+                end
+
                 % Prediction and Propagation
                 sv = obj.svStates(:,:,timeIdx);
                 refStates = obj.rcvrStates(:,timeIdx) + randn(8,1).*[1.5 0.15 1.5 0.15 3.0 0.3 0 0]';
 
                 [refPsr(:,timeIdx),refCarrFreq(:,timeIdx),~] = obj.calcPsr(refStates,sv);
 
-            end       
+
+
+                measIdx = measIdx + 1;
+
+
+
+            end
 
         end
     end
@@ -76,10 +96,44 @@ classdef VectorTracking < handle
 
             gen = config.general;
 
-            obj.timeStep = 1/50;
+            obj.timeStep = 1/config.aircraft.frequency;
             obj.startTime = 0;
             obj.endTime = config.aircraft.time;
             obj.date = datetime(gen.year,gen.month,gen.day);
+
+            obj.initialStates = [config.aircraft.initialState.u;...
+                config.aircraft.initialState.w;...
+                config.aircraft.initialState.v;...
+                config.aircraft.initialState.p;...
+                config.aircraft.initialState.q;...
+                config.aircraft.initialState.r;...
+                config.aircraft.initialState.x;...
+                config.aircraft.initialState.y;...
+                config.aircraft.initialState.z;...
+                config.aircraft.initialState.phi;...
+                str2num(config.aircraft.initialState.theta);...
+                str2num(config.aircraft.initialState.psi)];
+
+            Vehicle = load("DA40.mat");
+            BSFC_LUT = load("DA40ENGINE.mat");
+            STGeometry = load("DA40STGEOM.mat");
+            selWaypoints = load(sprintf('%s.mat',config.aircraft.waypoints));
+
+            aircraft.LLA = [selWaypoints.refLL -obj.initialStates(9)];
+            aircraft.BSFC_LUT = BSFC_LUT.BSFC_LUT;
+            aircraft.Vehicle = Vehicle.Vehicle;
+            aircraft.STGeometry = STGeometry.ST_Geometry;
+            aircraft.lookaheadDist = config.aircraft.lookaheadDistance;
+            aircraft.waypoints = selWaypoints.waypoints;
+            aircraft.engineForcesVAR = config.noise.engineForcesVAR;
+            aircraft.engineMomentsVAR = config.noise.engineMomentsVAR;
+            aircraft.aeroForcesVAR = config.noise.aeroForcesVAR;
+            aircraft.aeroMomentsVAR = config.noise.aeroMomentsVAR;
+            aircraft.gravityForcesVAR = config.noise.gravityForcesVAR;
+            aircraft.gravityMomentsVAR = config.noise.gravityMomentsVAR;
+
+            obj.RP = ReceiverPositions(obj.startTime,obj.endTime,obj.timeStep,aircraft);
+
 
         end
 
