@@ -9,7 +9,7 @@ general:
   outputDir: # If user wants to output result files to an external drive, otherwise save to current output directory
 aircraft:
   time: 60 # [s]
-  frequency: 50 # [Hz]
+  frequency: 400 # [Hz]
   waypoints: SCurveFlightPath
   lookaheadDistance: 50 # [m]
   initialState:
