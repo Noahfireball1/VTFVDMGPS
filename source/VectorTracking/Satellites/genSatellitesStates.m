@@ -19,7 +19,10 @@ data = rinex.rinex.GPS;
 [~,satIdx] = unique(data.SatelliteID);
 data = data(satIdx,:);
 
+fprintf('\t\t\t')
+upd = textprogressbar(length(timeArray));
 for i = 1:length(timeArray)
+    upd(i)
     [satPos,satVel,satID] = gnssconstellation(dateTimeVector(i),data,"GNSSFileType","RINEX");
 
     satStates(:,:,i) = [satPos(:,1)';satVel(:,1)';satPos(:,2)';satVel(:,2)';satPos(:,3)';satVel(:,3)';zeros(1,length(satID))];

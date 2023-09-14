@@ -9,7 +9,10 @@ projectRoot = fileparts(which(mfilename));
 addpath(genpath(projectRoot))
 dir.config = append(projectRoot,filesep,'config',filesep);
 dir.src = append(projectRoot,filesep,'source',filesep);
-dir.rinex = append(dir.src,'Satellites',filesep,'rinex',filesep);
+dir.tables = append(dir.src,'tables',filesep);
+dir.vt = append(dir.src,'VectorTracking',filesep);
+dir.rinex = append(dir.vt,'Satellites',filesep,'rinex',filesep);
+dir.svStates = append(dir.vt,'Satellites',filesep,'svStates',filesep);
 dir.waypoints = append(projectRoot,filesep,'waypoints',filesep);
 dir.output = append(projectRoot,filesep,'output',filesep);
 
@@ -21,13 +24,13 @@ inputFile = uigetfile({'*.yaml'},'Select Input File',dir.config);
 inputFilePath = append(dir.config,inputFile);
 
 %% Initializing Simulation
-model = initializeSim(inputFilePath,dir);
+[model,dir] = initializeSim(inputFilePath,dir);
 %% Starting Simulation
 printText(7);
 
-run = parsim(in);
+run = parsim(model);
 
-
+save(append(dir.output,sprintf('%s_results.mat',inputFile(1:end-5))),"run")
 
 
 

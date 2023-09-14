@@ -5,14 +5,11 @@ textStyle = '*green';
 
 switch option
     case 1
-        cprintf(programStyle,'[VTFVDMGPS]\t\t\t')
+        cprintf(programStyle,'[VTFVDMGPS]\t')
         cprintf(textStyle, 'Loading selected configuration file\n')
-        cprintf(textStyle, '\t\tRunning in Verbose mode...\n\n')
-
     case 2
         cprintf(programStyle,'[VTFVDMGPS]\t')
         cprintf(textStyle, 'Loading selected configuration file\n')
-        cprintf(textStyle, '\t\t\tRunning in Silent mode...\n\n')
     case 3
         cprintf(programStyle,'[VTFVDMGPS]\t')
         cprintf(textStyle, 'Loading Diamond DA-40 aircraft properties...\n')
@@ -41,6 +38,17 @@ switch option
         %% Please Select a Valid Configuration File to Get started
         cprintf(programStyle,'[VTFVDMGPS]\t')
         cprintf(textStyle,'Please select a valid configuration file to get started...\n\n')
+
+    case 9
+        cprintf(programStyle,'\n[VTFVDMGPS]\t')
+        cprintf(textStyle, 'Generating satellite states for current date and time\n')
+
+    case 10
+        cprintf(programStyle,'\n[VTFVDMGPS]\t')
+        cprintf(textStyle, 'Initializing simulations for Monte-Carlo analysis\n')
+    case 11
+                cprintf(programStyle,'\n[VTFVDMGPS]\t')
+        cprintf(textStyle, 'Loading satellite states for selected configuration\n')
 
     otherwise
 end
