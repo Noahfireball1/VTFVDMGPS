@@ -1,6 +1,6 @@
 # top level gitignore for Noahfireball1/FlightVehcileDynamicModel
 *.asv
-/output/*
+/output/*.mat
 /slprj/*
 *.slxc
 .netrc
