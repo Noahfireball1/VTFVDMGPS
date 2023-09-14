@@ -27,9 +27,10 @@ simText;
 
 % Generating Satellite States
 satStates = genSatellitesStates(End_Time,date,dir);
+tic
 
 run = sim("DA40_Flight_Model.slx");
-
+toc
 estLLA = flat2lla(run.estimatedStates(:,7:9),refLLA,0,0,'WGS84');
 refLLA = flat2lla(run.rcvrStates(:,7:9),refLLA,0,0,'WGS84');
 

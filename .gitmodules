@@ -1,6 +1,3 @@
 [submodule "utilities/customMatlab"]
 	path = utilities/customMatlab
 	url = git@github.com:Noahfireball1/customMatlab.git
-[submodule "utilities/WaypointGeneration"]
-	path = utilities/WaypointGeneration
-	url = git@github.com:Noahfireball1/WaypointGeneration.git
