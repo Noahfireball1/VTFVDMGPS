@@ -10,3 +10,4 @@ source/Satellites/rinex/AMC400USA_R_20223560000_01D_GN.rnx
 config/CDDISLogin.txt
 config/.netrc
 source/DA40_Flight_Model.slxc
+/source/slprj/*
