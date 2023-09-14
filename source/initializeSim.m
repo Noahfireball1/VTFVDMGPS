@@ -1,3 +1,5 @@
+function model = initializeSim(inputFilePath,dir)
+
 % Initializes simulation variables, structures, etc...
 config = ReadYaml(inputFilePath);
 general = config.general;
@@ -7,6 +9,30 @@ tableDir = append(dir.src,'tables',filesep);
 
 date = datetime(general.year,general.month,general.day);
 dayofyear = day(date,"dayofyear");
+
+
+% Generating Satellite States
+satStates = genSatellitesStates(End_Time,date,dir);
+
+for i = 1:1
+    rndSeedi = randi(1e6,1);
+    in(i) = Simulink.SimulationInput('DA40_Flight_Model');
+    in(i) = in(i).setVariable('rndSeed',rndSeedi);
+    in(i) = in(i).setVariable('refLLA',refLLA);
+    in(i) = in(i).setVariable('Start_Time',Start_Time);
+    in(i) = in(i).setVariable('End_Time',End_Time);
+    in(i) = in(i).setVariable('Time_Step',Time_Step);
+    in(i) = in(i).setVariable('Initial_X',Initial_X);
+    in(i) = in(i).setVariable('satStates',satStates);
+    in(i) = in(i).setVariable('dayofyear',dayofyear);
+    in(i) = in(i).setVariable('waypoints',waypoints);
+    in(i) = in(i).setVariable('lookaheadDist',lookaheadDist);
+    in(i) = in(i).setVariable('STGeometry',STGeometry);
+    in(i) = in(i).setVariable('Vehicle',Vehicle);
+    in(i) = in(i).setVariable('StNumbers',STNumbers);
+    in(i) = in(i).setVariable('BSFC_LUT',BSFC_LUT);
+    in(i) = in(i).setVariable('PowerFactor_LUT',PowerFactor_LUT);
+end
 
 Start_Time = 0;
 End_Time = aircraft.time;
@@ -74,39 +100,5 @@ Initial_X = [aircraft.initialState.u;...
 if config.general.verbose
     printText(6);
 end
-
-
-function printText(option)
-
-programStyle = 'green';
-textStyle = '*green';
-
-switch option
-    case 1
-        cprintf(programStyle,'[DCAM]\t')
-        cprintf(textStyle, 'Loading selected configuration file\n')
-        cprintf(textStyle, '\t\tRunning in Verbose mode...\n\n')
-
-    case 2
-        cprintf(programStyle,'[DCAM]\t')
-        cprintf(textStyle, 'Loading selected configuration file\n')
-        cprintf(textStyle, '\t\tRunning in Silent mode...\n\n')
-    case (3)
-        cprintf(programStyle,'[DCAM]\t')
-        cprintf(textStyle, 'Loading Diamond DA-40 aircraft properties...\n')
-    case(4)
-        cprintf(programStyle,'[DCAM]\t')
-        cprintf(textStyle, 'Loading Diamond DA-40 aerodynamic properties...\n')
-    case(5)
-        cprintf(programStyle,'[DCAM]\t')
-        cprintf(textStyle, 'Loading 3-blade propeller properties...\n')
-    case(6)
-        cprintf(programStyle,'[DCAM]\t')
-        cprintf(textStyle, 'Loading noise models for FVDM and selected IMUs...\n')
-
-    otherwise
 end
-
-end
-
 
