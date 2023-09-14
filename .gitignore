@@ -11,3 +11,4 @@ config/CDDISLogin.txt
 config/.netrc
 source/DA40_Flight_Model.slxc
 /source/slprj/*
+/source/VectorTracking/Satellites/svStates/*.mat
