@@ -28,7 +28,7 @@ simText;
 % Generating Satellite States
 satStates = genSatellitesStates(End_Time,date,dir);
 
-for i = 1:10
+for i = 1:1
     rndSeedi = randi(1e6,1);
     in(i) = Simulink.SimulationInput('DA40_Flight_Model');
     in(i) = in(i).setVariable('rndSeed',rndSeedi);

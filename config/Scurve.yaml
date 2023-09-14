@@ -5,14 +5,13 @@ general:
   day: 22
   verbose: 1
   outputDir: # If user wants to output result files to an external drive, otherwise save to current output directory
+  duration: 600
+  monteCarloRuns: 100
 aircraft:
-  time: 30 # [s]
   frequency: 400 # [Hz]
   waypoints: SCurveFlightPath
   lookaheadDistance: 50 # [m]
   initialState:
-    latitude: 32.612788581736706 # [degrees]
-    longitude: -85.43535088858731 # [degrees]
     u: 75 # [m/s]
     v: 0 # [m/s]
     w: 0 # [m/s]
