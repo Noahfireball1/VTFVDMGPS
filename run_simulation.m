@@ -27,19 +27,28 @@ simText;
 
 % Generating Satellite States
 satStates = genSatellitesStates(End_Time,date,dir);
-tic
 
-run = sim("DA40_Flight_Model.slx");
-toc
-estLLA = flat2lla(run.estimatedStates(:,7:9),refLLA,0,0,'WGS84');
-refLLA = flat2lla(run.rcvrStates(:,7:9),refLLA,0,0,'WGS84');
+for i = 1:10
+    rndSeedi = randi(1e6,1);
+    in(i) = Simulink.SimulationInput('DA40_Flight_Model');
+    in(i) = in(i).setVariable('rndSeed',rndSeedi);
+    in(i) = in(i).setVariable('refLLA',refLLA);
+    in(i) = in(i).setVariable('Start_Time',Start_Time);
+    in(i) = in(i).setVariable('End_Time',End_Time);
+    in(i) = in(i).setVariable('Time_Step',Time_Step);
+    in(i) = in(i).setVariable('Initial_X',Initial_X);
+    in(i) = in(i).setVariable('satStates',satStates);
+    in(i) = in(i).setVariable('dayofyear',dayofyear);
+    in(i) = in(i).setVariable('waypoints',waypoints);
+    in(i) = in(i).setVariable('lookaheadDist',lookaheadDist);
+    in(i) = in(i).setVariable('STGeometry',STGeometry);
+    in(i) = in(i).setVariable('Vehicle',Vehicle);
+    in(i) = in(i).setVariable('StNumbers',STNumbers);
+    in(i) = in(i).setVariable('BSFC_LUT',BSFC_LUT);
+    in(i) = in(i).setVariable('PowerFactor_LUT',PowerFactor_LUT);
+end
 
-
-%% Plotting
-figure
-geoplot(refLLA(:,1),refLLA(:,2))
-hold on 
-geoplot(estLLA(:,1),estLLA(:,2))
+run = parsim(in);
 
 
 
