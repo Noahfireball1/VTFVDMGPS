@@ -1,4 +1,14 @@
-# Top-level .gitignore for VTFVDMGPS
+# top level gitignore for Noahfireball1/FlightVehcileDynamicModel
 *.asv
+/output/*.mat
+/slprj/*
+*.slxc
 .netrc
-CDDISLogin.txt
+/source/*.slxc
+*.txt
+source/Satellites/rinex/AMC400USA_R_20223560000_01D_GN.rnx
+config/CDDISLogin.txt
+config/.netrc
+source/DA40_Flight_Model.slxc
+/source/slprj/*
+/source/VectorTracking/Satellites/svStates/*.mat
