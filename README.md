@@ -1,2 +1,2 @@
-# VTFVDMGPS
-This respository contains code to run a vector tracking algorithm using data generated from Noahfireball1/FlightVehicleDynamicModel and simulated IQ files
+# FlightVehicleDynamicModel
+This repository contains the simulink model to simulate a fixed flight vehicle given tables specified in the documentation. The example model is a diamond DA-40.

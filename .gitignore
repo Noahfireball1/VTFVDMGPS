@@ -1,4 +1,3 @@
-# Top-level .gitignore for VTFVDMGPS
+# top level gitignore for Noahfireball1/FlightVehcileDynamicModel
 *.asv
-.netrc
-CDDISLogin.txt
+/output/*
