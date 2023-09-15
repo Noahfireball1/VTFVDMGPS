@@ -10,7 +10,7 @@ PHI = calcJacobian(predictedStates,timeStep);
 
 estimatedCovariance = PHI*predictedCovariance*PHI' + Q;
 
-refStates = receiverStates;
+refStates = nan(12,1);
 
 %% Measurement Update
 
