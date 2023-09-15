@@ -33,6 +33,7 @@ selWaypoints = load(sprintf('%s.mat',aircraft.waypoints));
 if ~exist(append(dir.svStates,sprintf('%s_svStates.mat',configName)),"file")
     printText(9)
     satStates = genSatellitesStates(general.duration,date,dir);
+    mkdir(dir.svStates)
     save(append(dir.svStates,sprintf('%s_svStates.mat',configName)),"satStates")
 else
     printText(11)
