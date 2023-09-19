@@ -1,31 +1,20 @@
-function satStates = genSatellitesStates(time,date,dir)
+function satStates = genSatellitesStates(time,year,month,day,rinexFilePath)
 
-% Pull Rinex for given date and time
-rinex = GenerateEphemeris(date,dir);
+hourVector = 0;
+minuteVector = 0;
+secondVector = time;
 
-timeArray = 0:1/50:time;
+dateVector = [year month day hourVector minuteVector secondVector];
 
-dayVector = repmat(day(date),length(timeArray),1);
-monthVector = repmat(month(date),length(timeArray),1);
-yearVector = repmat(year(date),length(timeArray),1);
-hourVector = zeros(length(timeArray),1);
-minuteVector = zeros(length(timeArray),1);
-secondVector = timeArray';
+currentDateTime = datetime(dateVector,'Format','d-MMM-y HH:mm:ss.SSS');
+rinex = rinexread(rinexFilePath);
+rinex = rinex.GPS;
+[~,satIdx] = unique(rinex.SatelliteID);
+data = rinex(satIdx,:);
 
-dateVector = [yearVector monthVector dayVector hourVector minuteVector secondVector];
+[satPos,satVel,satID] = gnssconstellation(currentDateTime,data,"GNSSFileType","RINEX");
 
-dateTimeVector = datetime(dateVector,'Format','d-MMM-y HH:mm:ss.SSS');
-data = rinex.rinex.GPS;
-[~,satIdx] = unique(data.SatelliteID);
-data = data(satIdx,:);
-
-fprintf('\t\t\t')
-upd = textprogressbar(length(timeArray));
-for i = 1:length(timeArray)
-    upd(i)
-    [satPos,satVel,satID] = gnssconstellation(dateTimeVector(i),data,"GNSSFileType","RINEX");
-
-    satStates(:,:,i) = [satPos(:,1)';satVel(:,1)';satPos(:,2)';satVel(:,2)';satPos(:,3)';satVel(:,3)';zeros(1,length(satID))];
+satStates = [satPos(:,1)';satVel(:,1)';satPos(:,2)';satVel(:,2)';satPos(:,3)';satVel(:,3)';zeros(1,length(satID))];
 end
-end
+
 

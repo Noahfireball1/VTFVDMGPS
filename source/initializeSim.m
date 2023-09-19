@@ -29,16 +29,9 @@ load(append(dir.tables,"DA40STGEOM.mat"));
 load("DA40PROP.mat");
 selWaypoints = load(sprintf('%s.mat',aircraft.waypoints));
 
-% Generating Satellite States
-if ~exist(append(dir.svStates,sprintf('%s_svStates.mat',configName)),"file")
-    printText(9)
-    satStates = genSatellitesStates(general.duration,date,dir);
-    mkdir(dir.svStates)
-    save(append(dir.svStates,sprintf('%s_svStates.mat',configName)),"satStates")
-else
-    printText(11)
-    load(append(dir.svStates,sprintf('%s_svStates.mat',configName)))
-end
+% Pull Rinex for given date and time
+rinex = GenerateEphemeris(date,dir);
+rinex = string(rinex.rinexFilePath);
 % Reading in Flight Vehicle's Initial State
 u = aircraft.initialState.u;
 v = aircraft.initialState.v;
@@ -68,7 +61,7 @@ for i = 1:general.monteCarloRuns
     model(i) = model(i).setVariable('End_Time',general.duration);
     model(i) = model(i).setVariable('Time_Step',1/aircraft.frequency);
     model(i) = model(i).setVariable('Initial_X',[u;v;w;p;q;r;x;y;z;phi;theta;psi;clkBias;clkDrift]);
-    model(i) = model(i).setVariable('satStates',satStates);
+    model(i) = model(i).setVariable('rinexFilePath',rinex);
     model(i) = model(i).setVariable('dayofyear',day(date,"dayofyear"));
     model(i) = model(i).setVariable('waypoints',selWaypoints.waypoints);
     model(i) = model(i).setVariable('lookaheadDist',aircraft.lookaheadDistance);
@@ -77,6 +70,9 @@ for i = 1:general.monteCarloRuns
     model(i) = model(i).setVariable('StNumbers',STNumbers);
     model(i) = model(i).setVariable('BSFC_LUT',BSFC_LUT);
     model(i) = model(i).setVariable('PowerFactor_LUT',PowerFactor_LUT);
+    model(i) = model(i).setVariable('year',general.year);
+    model(i) = model(i).setVariable('month',general.month);
+    model(i) = model(i).setVariable('day',general.day);
 end
 
 end

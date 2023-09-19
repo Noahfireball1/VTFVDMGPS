@@ -1,6 +1,7 @@
-function [estimatedStates,refStates,estimatedCovariance] = VectorTracking(predictedStates,receiverStates,predictedCovariance,satelliteStates,time,refLLA)
+function [estimatedStates,refStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance] = VectorTracking(predictedStates,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,refLLA)
 
-Q  = diag([0.1 0.1 0.1 1e-6 1e-6 1e-6 1 1 1 1e-5 1e-5 1e-5 1e-7 1e-8]);
+% Q  = diag([0.1 0.1 0.1 1e-6 1e-6 1e-6 1 1 1 1e-5 1e-5 1e-5 1e-7 1e-8]);
+Q  = zeros(14);
 timeStep = 1/400;
 
 %% Time Update
@@ -11,6 +12,10 @@ PHI = calcJacobian(predictedStates,timeStep);
 estimatedCovariance = PHI*predictedCovariance*PHI' + Q;
 
 refStates = nan(12,1);
+residualPsr = nan(1,31);
+residualCarr = nan(1,31);
+variancePsr = nan(1,31);
+varianceCarr = nan(1,31);
 
 %% Measurement Update
 
@@ -24,13 +29,18 @@ if mod(time,1/50) == 0
     estStates = flat2ecef(refLLA,predictedStates);
 
     % Pull Current Satellite States
-    svStates = satelliteStates(:,:,floor(time*50 + 1));
+    svStates = genSatellitesStates(time,year,month,day,rinexFilePath);
 
     % Calculate Reciever PSR, Carrier Frequency, Unit Vectors
-    [refPsr,refCarr,unitVectors] = calcPsr(refStates,svStates);
+    [psr,carr,unitVectors,activeSVs] = calcPsr(refStates,svStates);
+    refPsr = psr(activeSVs);
+    refCarr = carr(activeSVs);
+    unitVectors = unitVectors(:,activeSVs);
 
     % Calculate Predicted PSR, Carrier Frequency
-    [estPsr,estCarr,~] = calcPsr(estStates,svStates);
+    [psr,carr,~,~] = calcPsr(estStates,svStates);
+    estPsr = psr(activeSVs);
+    estCarr = carr(activeSVs);
 
     % Generate Correlator Residuals
     [resPsr,resCarr,varPsr,varCarr] = genCorrelatorResiduals(refPsr,estPsr,refCarr,estCarr);
@@ -56,6 +66,14 @@ if mod(time,1/50) == 0
     % Convert States Back to Flat Earth Frame
     estimatedStates = ecef2flat(refLLA,estStates);
     refStates = ecef2flat(refLLA,refStates);
+    % sprintf('%f',time)
+
+    % Convert residuals to determinstic size
+    activeIdx = find(activeSVs);
+    residualPsr(activeIdx) = resPsr; 
+    residualCarr(activeIdx) = resCarr;
+    variancePsr(activeIdx) = varPsr;
+    varianceCarr(activeIdx) = varCarr;
 end
 
 end

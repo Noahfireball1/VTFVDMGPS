@@ -2,7 +2,8 @@ classdef GenerateEphemeris < handle
     %GENERATEEPHEMERIS Summary of this class goes here
     %   Detailed explanation goes here
     properties (Access = public)
-        rinex
+        rinex;
+        rinexFilePath;
 
     end
 
@@ -44,12 +45,12 @@ classdef GenerateEphemeris < handle
         function loadEphemeris(obj,dir)
 
             % Load or Download Correct Rinex File
-            rinexFilePath = obj.loadRinexFile(dir);
+            obj.rinexFilePath = obj.loadRinexFile(dir);
 
             % Parse Ephemeris from File
             switch obj.extension                                                                                 
                 case ".rnx.gz"
-                    obj.rinex = rinexread(rinexFilePath);
+                    obj.rinex = rinexread(obj.rinexFilePath);
 
                 case ".Z"
 

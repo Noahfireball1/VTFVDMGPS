@@ -1,4 +1,4 @@
-function [psr,carrFreq,unitVectors] = calcPsr(usrStates,svStates)
+function [psr,carrFreq,unitVectors,activeSVs] = calcPsr(usrStates,svStates)
 
 dx = (svStates(1,:) - usrStates(7));
 dy = (svStates(3,:) - usrStates(8));
@@ -21,9 +21,7 @@ end
 LLA = ecef2lla(usrStates(7:9)');
 [~,el,~] = ecef2aer(svStates(1,:),svStates(3,:),svStates(5,:),LLA(1),LLA(2),LLA(3),wgs84Ellipsoid("meter"));
 
-psr = psr(1,el > 0);
-carrFreq = carrFreq(1,el > 0);
-unitVectors = unitVectors(:,el > 0);
+activeSVs = el > 0;
 
 end
 
