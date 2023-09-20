@@ -1,7 +1,7 @@
 %% Formatting
 clc 
 clear
-close all
+% close all
 format shortg
 
 %% Adding Directories Based on User's Paths

@@ -10,6 +10,8 @@ aircraft:
   frequency: 400 # [Hz]
   waypoints: SCurveFlightPath
   lookaheadDistance: 50 # [m]
+  noisePowerForces: [500 500 500]
+  noiseTSForces: 0.0025
   initialState:
     u: 75 # [m/s]
     v: 0 # [m/s]

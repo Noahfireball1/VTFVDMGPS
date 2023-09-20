@@ -63,7 +63,7 @@ for i = 1:general.monteCarloRuns
     model(i) = model(i).setVariable('Initial_X',[u;v;w;p;q;r;x;y;z;phi;theta;psi;clkBias;clkDrift]);
     model(i) = model(i).setVariable('rinexFilePath',rinex);
     model(i) = model(i).setVariable('dayofyear',day(date,"dayofyear"));
-    model(i) = model(i).setVariable('waypoints',selWaypoints.waypoints);
+    model(i) = model(i).setVariable('waypoints',flipud(selWaypoints.waypoints));
     model(i) = model(i).setVariable('lookaheadDist',aircraft.lookaheadDistance);
     model(i) = model(i).setVariable('STGeometry',ST_Geometry);
     model(i) = model(i).setVariable('Vehicle',Vehicle);
@@ -73,6 +73,8 @@ for i = 1:general.monteCarloRuns
     model(i) = model(i).setVariable('year',general.year);
     model(i) = model(i).setVariable('month',general.month);
     model(i) = model(i).setVariable('day',general.day);
+    model(i) = model(i).setVariable('noisePowerForces',str2num(aircraft.noisePowerForces{1,1}));
+    model(i) = model(i).setVariable('noiseTSForces',aircraft.noiseTSForces);
 end
 
 end

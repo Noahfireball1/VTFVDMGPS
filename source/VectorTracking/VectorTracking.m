@@ -66,7 +66,6 @@ if mod(time,1/50) == 0
     % Convert States Back to Flat Earth Frame
     estimatedStates = ecef2flat(refLLA,estStates);
     refStates = ecef2flat(refLLA,refStates);
-    % sprintf('%f',time)
 
     % Convert residuals to determinstic size
     activeIdx = find(activeSVs);

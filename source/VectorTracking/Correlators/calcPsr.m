@@ -8,7 +8,11 @@ svVel = [svStates(2,:);svStates(4,:);svStates(6,:)]';
 
 range = sqrt(dx.^2 + dy.^2 + dz.^2);
 
-psr = range;
+if length(usrStates) == 14
+    psr = range + 299792458*usrStates(13);
+else
+    psr = range;
+end
 unitVectors = [dx./range; dy./range; dz./range];
 
 for i = 1:length(psr)
