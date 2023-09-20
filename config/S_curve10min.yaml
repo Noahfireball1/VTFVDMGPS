@@ -4,7 +4,7 @@ general:
   month: 12
   day: 22
   outputDir: # If user wants to output result files to an external drive, otherwise save to current output directory
-  duration: 300
+  duration: 600
   monteCarloRuns: 1
 aircraft:
   frequency: 400 # [Hz]

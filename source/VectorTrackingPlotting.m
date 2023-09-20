@@ -19,6 +19,8 @@ classdef VectorTrackingPlotting < handle
             obj.timeVector = obj.outputs.estimatedStates.time;
             obj.numMonteCarlos = 1;
 
+            obj.plotMap();
+
             obj.plotStates();
 
             obj.plotErrors();
@@ -27,6 +29,19 @@ classdef VectorTrackingPlotting < handle
 
 
 
+
+        end
+
+        function plotMap(obj)
+            rcvrLLA = flat2lla(obj.outputs.rcvrStates(1:4:end,7:9),[obj.outputs.trueLAT(1) obj.outputs.trueLONG(1)],0,0,'WGS84');
+            estiLLA = flat2lla(obj.outputs.estimatedStates.signals.values(1:4:end,7:9),[obj.outputs.trueLAT(1) obj.outputs.trueLONG(1)],0,0,'WGS84');
+
+            figure
+            geoplot(estiLLA(:,1),estiLLA(:,2),'LineWidth',1,'Color',obj.primaryColor)
+            hold on
+            geoplot(rcvrLLA(:,1),rcvrLLA(:,2),'LineWidth',1,'Color',obj.secondaryColor)
+            ax = gca;
+            ax.FontSize = obj.fs;
 
         end
 
