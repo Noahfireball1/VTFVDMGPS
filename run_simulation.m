@@ -1,5 +1,5 @@
 %% Formatting
-clc
+clc 
 clear
 close all
 format shortg

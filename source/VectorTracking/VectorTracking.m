@@ -1,7 +1,7 @@
 function [estimatedStates,refStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance] = VectorTracking(predictedStates,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,refLLA)
 
-% Q  = diag([0.1 0.1 0.1 1e-6 1e-6 1e-6 1 1 1 1e-5 1e-5 1e-5 1e-7 1e-8]);
-Q  = zeros(14);
+Q  = diag([0.1 0.1 0.1 1e-6 1e-6 1e-6 10 10 10 1e-5 1e-5 1e-5 1e-7 1e-8]);
+% Q  = zeros(14);
 timeStep = 1/400;
 
 %% Time Update
