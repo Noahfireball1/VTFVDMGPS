@@ -1,5 +1,5 @@
-function psrRes = calcPsrRes(discDLL,amplitude)
+function psrRes = calcPsrRes(discDLL)
 chipWidth = 299792458/1.023e6;
 
-psrRes = discDLL.*chipWidth./(2.*amplitude);
+psrRes = discDLL*chipWidth;
 end

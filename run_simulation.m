@@ -1,7 +1,7 @@
 %% Formatting
-clc 
+clc
 clear
-% close all
+close all
 format shortg
 
 %% Adding Directories Based on User's Paths
@@ -26,7 +26,7 @@ inputFilePath = append(dir.config,inputFile);
 %% Initializing Simulation
 [model,dir] = initializeSim(inputFilePath,dir);
 %% Starting Simulation
-printText(7); 
+printText(7);
 
 run = sim(model);
 

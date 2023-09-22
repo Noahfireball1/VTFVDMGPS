@@ -4,14 +4,14 @@ general:
   month: 12
   day: 22
   outputDir: # If user wants to output result files to an external drive, otherwise save to current output directory
-  duration: 300
+  duration: 120
   monteCarloRuns: 1
 aircraft:
   frequency: 400 # [Hz]
   waypoints: SCurveFlightPath
-  lookaheadDistance: 50 # [m]
-  noisePowerForces: [500 500 500]
-  noiseTSForces: 0.0025
+  lookaheadDistance: 10 # [m]
+  noisePowerForces: [1 1 1]
+  noiseTSForces: 0.1
   initialState:
     u: 75 # [m/s]
     v: 0 # [m/s]
