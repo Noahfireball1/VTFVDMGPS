@@ -29,8 +29,8 @@ for i = 1:length(psr)
 end
 
 % Discard any satellites with a negative elevation
-LLA = ecef2lla(usrStates(7:9)');
-[~,el,~] = ecef2aer(svStates(1,:),svStates(3,:),svStates(5,:),LLA(1),LLA(2),LLA(3),wgs84Ellipsoid("meter"));
+LLA = ecef2lla(usrStates(7:9)','WGS84');
+[~,el,~] = lookangles(LLA,[svStates(1,:);svStates(3,:);svStates(5,:)]');
 
 activeSVs = el > 20;
 
