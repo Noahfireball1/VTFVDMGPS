@@ -49,7 +49,7 @@ end
 newAmplitude = 0.99*oldAmplitude(activeSVIdx)' + 0.01*power;
 newNoise = 0.99*oldNoise(activeSVIdx)' + 0.01*gpsNoise;
 
-newCN0 = ((newAmplitude - newNoise)./(2*pdiTime*newNoise));
+newCN0 = ((newAmplitude - 4*newNoise)./(2*pdiTime*newNoise));
 
 % Generating pseudorange and pseudorange rate residuals
 resPsr = calcPsrRes(discDLL);
