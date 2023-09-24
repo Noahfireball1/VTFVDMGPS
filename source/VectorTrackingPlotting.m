@@ -321,7 +321,7 @@ classdef VectorTrackingPlotting < handle
             figure('Position',[1400 200 900 800])
             hold on
             title('Residual Pseudoranges of In-View SVs')
-            s1 = scatter(obj.measUpdateTime ,obj.outputs.resPsr(obj.timeIdx),'k*');
+            s1 = scatter(obj.measUpdateTime ,obj.outputs.resPsr(obj.timeIdx,:),'k*');
             p1 = plot(obj.measUpdateTime ,avgResPsr(obj.timeIdx) ,'Color',obj.secondaryColor,LineWidth=2);
             legend([s1(1),p1(1)],'Residual Pseudoranges','Mean')
             ax = gca;
@@ -330,7 +330,7 @@ classdef VectorTrackingPlotting < handle
             figure('Position',[1600 200 900 800])
             hold on
             title('Residual Carrier Frequency of In-View SVs')
-            s2 = scatter(obj.measUpdateTime,obj.outputs.resCarr(obj.timeIdx),'k*');
+            s2 = scatter(obj.measUpdateTime,obj.outputs.resCarr(obj.timeIdx,:),'k*');
             p2 = plot(obj.measUpdateTime ,avgResCarr(obj.timeIdx) ,'Color',obj.secondaryColor,LineWidth=2);
             legend([s2(1),p2(1)],'Residual Frequencies','Mean')
             ax = gca;

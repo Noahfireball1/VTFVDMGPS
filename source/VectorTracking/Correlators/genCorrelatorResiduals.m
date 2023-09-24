@@ -1,4 +1,4 @@
-function [resPsr,resCarr,varPsr,varCarr,newCN0,newAmplitude,newNoise,newPhase] = genCorrelatorResiduals(refPsr,estPsr,refCarr,estCarr,oldCN0,oldAmplitude,oldNoise,activeSVIdx,oldPhase)
+function [resPsr,resCarr,varPsr,varCarr,newCN0,newAmplitude,newNoise,newPhase] = genCorrelatorResiduals(refPsr,estPsr,refCarr,estCarr,oldCN0,oldAmplitude,oldNoise,activeSVIdx,oldPhase,initCN0)
 chipOffset = 0.5;
 pdiTime = 1/50;
 
@@ -11,7 +11,7 @@ end
 
 % Calculate Carrier Phase Errors
 phase1 = oldPhase(activeSVIdx)';
-phase2 = phase1 + carrFreqError*(pdiTime/2);
+phase2 = oldPhase(activeSVIdx)' + carrFreqError*(pdiTime/2);
 phase = (phase1 + phase2)/2;
 newPhase = phase2;
 
@@ -20,7 +20,7 @@ amplitude = sinc(pi*carrFreqError*pdiTime);
 midAmplitude = sinc(pi*carrFreqError*pdiTime/2);
 
 % Calculate Noise Estimate
-noiseEstimate = sqrt(1./(2*pdiTime*oldCN0(activeSVIdx)));
+noiseEstimate = sqrt(1./(2*pdiTime*initCN0(activeSVIdx)));
 
 % Calculate Correlators
 for i = 1:length(noiseEstimate)

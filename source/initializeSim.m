@@ -5,6 +5,7 @@ printText(1)
 config = ReadYaml(inputFilePath);
 general = config.general;
 aircraft = config.aircraft;
+signal = config.signal;
 [~,configName,~] = fileparts(inputFilePath);
 
 %% General
@@ -73,8 +74,8 @@ for i = 1:general.monteCarloRuns
     model(i) = model(i).setVariable('year',general.year);
     model(i) = model(i).setVariable('month',general.month);
     model(i) = model(i).setVariable('day',general.day);
-    model(i) = model(i).setVariable('noisePowerForces',str2num(aircraft.noisePowerForces{1,1}));
-    model(i) = model(i).setVariable('noiseTSForces',aircraft.noiseTSForces);
+    model(i) = model(i).setVariable('initCN0',10.^(signal.CN0/10).*ones(1,31));
+    model(i) = model(i).setVariable('amplitude',signal.amplitude);
 end
 
 end

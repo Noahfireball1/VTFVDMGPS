@@ -1,9 +1,10 @@
-function [estimatedStates,refStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase] = VectorTracking(predictedStates,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,refLLA,timeStep,oldCN0,oldAmplitude,oldNoise,m,cg,imm,oldPhase)
+function [estimatedStates,refStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase] = ...
+    VectorTracking(predictedStates,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,refLLA,timeStep,oldCN0,oldAmplitude,oldNoise,m,cg,imm,oldPhase,initCN0)
 
-residualPsr = zeros(1,31);
-residualCarr = zeros(1,31);
-variancePsr = zeros(1,31);
-varianceCarr = zeros(1,31);
+residualPsr = nan(1,31);
+residualCarr = nan(1,31);
+variancePsr = nan(1,31);
+varianceCarr = nan(1,31);
 newCN0 = oldCN0';
 newAmplitude = oldAmplitude';
 newNoise = oldNoise';
@@ -38,7 +39,7 @@ if mod(time,1/50) == 0
         estCarr = carr(activeSVs);
 
         % Generate Correlator Residuals
-        [resPsr,resCarr,varPsr,varCarr,CN0,Amplitude,Noise,Phase] = genCorrelatorResiduals(refPsr,estPsr,refCarr,estCarr,oldCN0,oldAmplitude,oldNoise,activeSVs,oldPhase);
+        [resPsr,resCarr,varPsr,varCarr,CN0,Amplitude,Noise,Phase] = genCorrelatorResiduals(refPsr,estPsr,refCarr,estCarr,oldCN0,oldAmplitude,oldNoise,activeSVs,oldPhase,initCN0);
 
         % Form Z Array
         Z = formZ(resPsr,resCarr);
@@ -79,16 +80,11 @@ if mod(time,1/50) == 0
     end
 
 else
-    % Time Update Covariance
-    Q = diag([0.15 0.15 0.0015 0.0015 0.0015 0.0015 15 15 15 0.015 0.015 0.015 0 0]);
 
-    LLA = flat2lla(receiverStates(7:9)',refLLA,0,0,'WGS84');
-    DCM = [-cosd(LLA(2))*sind(LLA(1)) -sind(LLA(2))*sind(LLA(1)) cosd(LLA(1));
-        sind(LLA(2)) cosd(LLA(2)) 0;
-        cosd(LLA(2))*cosd(LLA(1))  cosd(LLA(1))*sind(LLA(2)) sind(LLA(1));
-        ];
+    estimatedStates = predictedStates;
 
-    estimatedCovariance = calcCovariance(predictedStates,predictedCovariance,timeStep,Q,DCM,m,cg,imm);
+    % Update Covariance
+    [estimatedCovariance] = calculateCovariance(predictedStates,timeStep,predictedCovariance,refLLA);
 
 end
 end
