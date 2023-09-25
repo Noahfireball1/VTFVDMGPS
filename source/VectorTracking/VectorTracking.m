@@ -16,14 +16,13 @@ refStates = nan(12,1);
 if mod(time,1/50) == 0
     try
         % Convert Receiver States to ECEF
-        refStates = flat2ecef(refLLA,receiverStates);
+        refStates = receiverStates;
 
-        refStates = refStates; % + randn(12,1).*[0.15;0.15;0.15;0;0;0;1.5;1.5;3.0;0;0;0];
+        % + randn(12,1).*[0.15;0.15;0.15;0;0;0;1.5;1.5;3.0;0;0;0];
 
         % Convert Predicted States to ECEF
-        estStates = flat2ecef(refLLA,predictedStates);
-
-
+        estStates = predictedStates;
+        
         % Pull Current Satellite States
         svStates = genSatellitesStates(time,year,month,day,rinexFilePath);
 

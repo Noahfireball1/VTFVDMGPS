@@ -1,5 +1,8 @@
-function [psr,psrDot,unitVectors,activeSVs] = calcPsr(usrStates,svStates)
+function [psr,psrDot,unitVectors,activeSVs] = calcPsr(usrStates,svStates,refLLA)
 c = 299792458;
+% Convert svStates to NED frame
+nedSVStates = ecef2ned(svStates(1),svStates(3),svStates(5),refLLA(1),refLLA(2),refLLA(3),referenceEllipsoid('wgs84','meter'));
+
 
 if length(usrStates) < 14
     clkBias = 0;
