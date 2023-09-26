@@ -12,5 +12,7 @@ for i = 1:2:2*length(unitVectors(1,:))
 
     count = count + 1;
 end
+
+H = H';
 end
 

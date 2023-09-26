@@ -101,8 +101,6 @@ newxk0_dot = subs(xk0_dot,[u v w p q r x y z phi theta ps]...
     ,[newu newv neww newp newq newr newx newy newz newphi newtheta newps]);
 newxk0_dot = double(vpa(newxk0_dot));
 
-Q = diag(std(B*(newxk0_dot*newxk0_dot')*B'))./1e6;
-
 newCov = PHI*oldCov*PHI' + Q;
 
 
