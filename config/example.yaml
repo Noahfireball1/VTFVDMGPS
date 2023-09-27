@@ -17,12 +17,12 @@ aircraft:
     p: 0 # [rad/s]
     q: 0 # [rad/s]
     r: 0 # [rad/s]
-    x: 0 # [m]
-    y: 0 # [m]
-    z: -1000 # [m]
+    lat: 0.65617 # [radians]
+    long: -2.1376 # [radians]
+    alt: 1000 # [m]
     phi: 0 # [rad]
     theta: 4*pi/180 # [rad]
-    psi: 90/180*pi # [rad]
+    psi: '0' # [rad]
     clkBias: 0
     clkDrift: 0
 signal:

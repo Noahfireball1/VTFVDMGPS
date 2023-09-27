@@ -18,6 +18,16 @@ phi = X(10);
 theta = X(11);
 psi = X(12);
 
+C_n_b = [1 0 0;0 cos(phi) sin(phi); 0 -sin(phi) cos(phi)]*...
+    [cos(theta) 0 -sin(theta); 0 1 0; sin(theta) 0 cos(theta)]*...
+    [cos(psi) sin(psi) 0; -sin(psi) cos(psi) 0; 0 0 1];
+
+rotatedVelo = C_n_b*[u;v;w];
+
+u = rotatedVelo(1);
+v = rotatedVelo(2);
+w = rotatedVelo(3);
+
 V = norm([u;v;w]);
 %% Defining Strip Theory Geometry from the excel and text files...
 xp = stripGeom(:,1); % x location

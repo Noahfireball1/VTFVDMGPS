@@ -1,4 +1,8 @@
-function X_Dot = CalcXdot(m,Ic_B,F_B,M_B,X,CG,InvMassMatrix,timeStep)
+function [rdot, vdot, omega_dot, euler_rates]  = CalcXdot(m,Ic_B,F_B,M_B,X)
+% Constants
+e = 0.0818191910428; % eccentricity
+a = 6378137.0; % equatorial radius [meters]
+omega_ie = 7.292115e-5; % Earth's rotation rate [rad/s]
 
 u = X(1);
 v = X(2);
@@ -6,52 +10,42 @@ w = X(3);
 p = X(4);
 q = X(5);
 r = X(6);
-x = X(7);
-y = X(8);
-z = X(9);
+lat = X(7);
+long = X(8);
+alt = X(9);
 phi = X(10);
 theta = X(11);
 psi = X(12);
 
+omega_skew = formskewsym([p;q;r]);
+C_omega = [1 tan(theta)*sin(phi) tan(theta)*cos(phi);...
+    0 cos(phi) -sin(phi);...
+    0 sin(phi)/cos(theta) cos(phi)/cos(theta)];
+C_n_b = [1 0 0;0 cos(phi) sin(phi); 0 -sin(phi) cos(phi)]*...
+    [cos(theta) 0 -sin(theta); 0 1 0; sin(theta) 0 cos(theta)]*...
+    [cos(psi) sin(psi) 0; -sin(psi) cos(psi) 0; 0 0 1];
+C_b_n = C_n_b';
 
-Xcg = CG(1);
-Ycg = CG(2);
-Zcg = CG(3);
+R_N = (a*(1-e^2))/(1-e^2*sin(long)^2)^(3/2); % [checked]
+R_E = (a)/(1 - e^2*sin(long)^2)^(1/2); % [checked]
 
-CGssm = [0 -Zcg Ycg;Zcg 0 -Xcg;-Ycg Xcg 0];
+omega_ie_n = [omega_ie*cos(long);0;-omega_ie*sin(long)]; % [checked]
+omega_ie_n_skew = [0 -omega_ie_n(3) omega_ie_n(2); omega_ie_n(3) 0 -omega_ie_n(1); -omega_ie_n(2) omega_ie_n(1) 0];
 
 
-lambdaX = F_B(1)/m + r*v - q*w - 0 - 2*q*0 + 2*r*0 + Xcg*(q^2 + r^2) - Ycg*p*q - Zcg*p*r;
-lambdaY = F_B(2)/m + p*w - r*u - 0 - 2*r*0 + 2*p*0 - Xcg*p*q + Ycg*(p^2 +r^2) - Zcg*q*r;
-lambdaZ = F_B(3)/m + q*u - p*v - 0 - 2*p*0 + 2*q*0 - Xcg*p*r - Ycg*q*r + Zcg*(p^2 + q^2);
 
-MomentVector = [p;q;r];
 
-MomentVectorssm = [0 -r q;r 0 -p;-q p 0];
+rdot = [u/(R_N + alt);v/((R_E + alt)*cos(long));-w]; % [lat;long;alt] (radians,meters) Position derivative from earth to body in the nav frame
 
-muVector = [M_B(1);M_B(2);M_B(3)] - (MomentVectorssm*Ic_B*MomentVector) - m*CGssm*MomentVectorssm*[u;v;w];
-LAMEparams = [lambdaX;lambdaY;lambdaZ;muVector];
-X_Dot(1:6,:) = InvMassMatrix*LAMEparams;
+omega_en_n = [rdot(1)*cos(long);-rdot(2);rdot(1)*sin(long)]; % [checked]
+omega_en_n_skew = [0 -omega_en_n(3) omega_en_n(2); omega_en_n(3) 0 -omega_en_n(1); -omega_en_n(2) omega_en_n(1) 0];
 
-cphi = cos(phi);
-sphi = sin(phi);
+omega_nb_b = [p;q;r] - C_n_b*(omega_ie_n + omega_en_n);
 
-ctheta = cos(theta);
-stheta = sin(theta);
-ttheta = tan(theta);
+vdot = C_b_n*(F_B/m) - (2*omega_ie_n_skew + omega_en_n_skew)*[u;v;w]; % [Nv;Ev;Dv] (meters) Velocity derivative from earth to body in the nav frame
+euler_rates = C_omega*omega_nb_b ; % [phi_dot;theta_dot;psi_dot] (radians) euler rates from body to nav
+omega_dot = Ic_B^-1*(M_B - omega_skew*Ic_B*[p;q;r]); % [omega_x_dot, omega_y_dot, omega_z_dot] from inertial to body in the body frame
 
-cpsi = cos(psi);
-spsi = sin(psi);
 
-xdot = ctheta*cpsi*u + sphi*stheta*cpsi - cphi*spsi*v + cphi*stheta*cpsi + sphi*spsi*w;
-ydot = ctheta*spsi*u + sphi*stheta*spsi + cphi*cpsi*v + cphi*stheta*spsi - sphi*cpsi*w;
-zdot = -stheta*u + sphi*ctheta*v + cphi*ctheta*w;
-phidot = p + q*sphi*ttheta + r*cphi*ttheta;
-thdot = q*cphi - r*sphi;
-psidot = q*sphi/ctheta + r*cphi/ctheta;
-X_Dot(7:12,:) = [xdot;ydot;zdot;phidot;thdot;psidot];
-
-X_Dot(13:14,:) = [X(14);0];
-X_Dot = X_Dot + randn(14,1).*[0.15 0.15 0.15 0 0 0 1.5 1.5 1.5 0 0 0 1e-10 0]';
 
 end

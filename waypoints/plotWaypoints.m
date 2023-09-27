@@ -8,7 +8,7 @@ format shortg
 load("SCurveFlightPath.mat")
 
 
-LLA = flat2lla(waypoints,refLL,0,0,'WGS84');
+waypoints = flipud(lla2flat(waypoints.*[180/pi 180/pi 1],refLL,0,0,'WGS84'));
 
 figure('Position',[1000 200 900 800])
 geoplot(LLA(:,1),LLA(:,2),'LineWidth',2,'Color',[0 0 0],LineStyle='--')
