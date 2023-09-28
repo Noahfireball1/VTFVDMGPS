@@ -44,8 +44,8 @@ omega_nb_b = [p;q;r] - C_n_b*(omega_ie_n + omega_en_n);
 
 vdot = C_b_n*(F_B/m) - (2*omega_ie_n_skew + omega_en_n_skew)*[u;v;w]; % [Nv;Ev;Dv] (meters) Velocity derivative from earth to body in the nav frame
 euler_rates = C_omega*omega_nb_b ; % [phi_dot;theta_dot;psi_dot] (radians) euler rates from body to nav
-omega_dot = Ic_B^-1*(M_B - omega_skew*Ic_B*[p;q;r]); % [omega_x_dot, omega_y_dot, omega_z_dot] from inertial to body in the body frame
+omega_dot = Ic_B^-1*(M_B - omega_skew*(Ic_B*[p;q;r])); % [omega_x_dot, omega_y_dot, omega_z_dot] from inertial to body in the body frame
 
-
+test = [vdot;omega_dot;rdot;euler_rates]*1/400 + X;
 
 end

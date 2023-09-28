@@ -5,7 +5,7 @@ close all
 format shortg
 
 %% Adding Directories Based on User's Paths
-projectRoot = fileparts(which(mfilename));
+projectRoot = fileparts(which(mfilename)); 
 addpath(genpath(projectRoot))
 dir.config = append(projectRoot,filesep,'config',filesep);
 dir.src = append(projectRoot,filesep,'source',filesep);

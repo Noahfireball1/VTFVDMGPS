@@ -2,10 +2,6 @@ function [resPsr,resCarr,varPsr,varCarr,newCN0,newAmplitude,newNoise,newPhase] =
 chipOffset = 0.5;
 pdiTime = 1/50;
 
-if mean(oldCN0(activeSVIdx) < 0) ~= 0
-    stop = 1;
-end
-
 % Calculate Carrier Frequency and Code Phase Errors
 [carrFreqError,codePhaseError] = calcErrors(refPsr,refCarr,estPsr,estCarr);
 
@@ -57,9 +53,6 @@ resCarr = calcCarrRes(discFLL);
 
 % Calculating Variances for Measurement Update
 [varPsr,varCarr] = calcResVariances(newCN0);
-if mean(imag(newAmplitude)) ~= 0
-    stop = 1;
-end
 
 end
 

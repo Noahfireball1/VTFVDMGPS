@@ -49,6 +49,7 @@ psi = str2num(aircraft.initialState.psi);
 clkBias = aircraft.initialState.clkBias;
 clkDrift = aircraft.initialState.clkDrift;
 
+
 printText(10)
 fprintf('\t\t\t')
 upd = textprogressbar(general.monteCarloRuns);
@@ -77,6 +78,7 @@ for i = 1:general.monteCarloRuns
     model(i) = model(i).setVariable('day',general.day);
     model(i) = model(i).setVariable('initCN0',10.^(signal.CN0/10).*ones(1,31));
     model(i) = model(i).setVariable('amplitude',signal.amplitude);
+    model(i) = model(i).setVariable('S',diag(str2num(cell2mat(aircraft.noisePSD))));
 end
 
 end
