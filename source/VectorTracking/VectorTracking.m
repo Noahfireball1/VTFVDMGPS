@@ -1,5 +1,5 @@
 function [estimatedStates,refStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase] = ...
-    VectorTracking(predictedStates,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,refLLA,oldCN0,oldAmplitude,oldNoise,oldPhase,initCN0)
+    VectorTracking(forces,moments,predictedStates,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,oldCN0,oldAmplitude,oldNoise,oldPhase,initCN0,Time_Step,S)
 
 residualPsr = nan(1,31);
 residualCarr = nan(1,31);
@@ -83,10 +83,25 @@ if mod(time,1/50) == 0 && update
 
 else
 
-    % Time Update
-    estimatedStates = predictedStates;
+    %% Time Update
 
-    estimatedCovariance = predictedCovariance;
+    % Form Discrete State Transition Matrix (Phi)
+    Phi = formPHI(predictedStates,forces,moments,Time_Step);
+
+    % Form Noise Distribution Matrix (Gamma)
+    Gamma = formG(Time_Step);
+
+    % Form Disturbance Vector (w)
+    w = formW(S,Time_Step);
+
+    % Predict New State
+    estimatedStates = Phi*predictedStates + Gamma*w;
+
+    % Form Q
+    Qd = formQ(w,Gamma);
+
+    % Predict New Covariance
+    estimatedCovariance = Phi*predictedCovariance*Phi' + Qd;
 
 end
 end
