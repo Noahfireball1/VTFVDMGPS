@@ -9,16 +9,36 @@ newCN0 = oldCN0';
 newAmplitude = oldAmplitude';
 newNoise = oldNoise';
 newPhase = oldPhase';
-estimatedStates = zeros(14,1);
-refStates = nan(8,1);
+ refStates = nan(8,1);
+if mean(predictedStates(1:12) - receiverStates) ~= 0
+    stop  = 1;
+end
+%% Time Update
 
+% Form Discrete State Transition Matrix (Phi)
+Phi = formPHI(predictedStates,forces,moments,Time_Step);
+
+% Form Noise Distribution Matrix (Gamma)
+G = formG(Time_Step);
+
+% Predict New State
+predictedStates = predictStates(predictedStates,forces,moments,Time_Step);
+
+% Form Q
+Qd = formQ(S,G,Time_Step);
+
+% Predict New Covariance
+estimatedCovariance = Phi*predictedCovariance*Phi' + Qd;
+
+% Form Disturbance Vector (w)
+w = formW(Qd,S);
 %% Measurement Update
 update = 1;
 if mod(time,1/50) == 0 && update
     try
         % Convert Receiver States to ECEF
-        refStates(1:3) = lla2ecef(receiverStates(7:9)'.*(180/pi),'WGS84') + randn(1,3).*[1.5 1.5 3.0];
-        refStates(4:6) = ned2ecefv(receiverStates(1),receiverStates(2),receiverStates(3),receiverStates(7),receiverStates(8),'radians') + randn(1,3).*[0.15 0.15 0.30];
+        refStates(1:3) = lla2ecef(receiverStates(7:9)'.*(180/pi),'WGS84')';
+        refStates(4:6) = ned2ecefv(receiverStates(1),receiverStates(2),receiverStates(3),receiverStates(7),receiverStates(8),'radians');
         refStates(7) = 0;
         refStates(8) = 0;
 
@@ -35,7 +55,7 @@ if mod(time,1/50) == 0 && update
         [psr,carr,~,activeSVs] = calcPsr(refStates,svStates);
         refPsr = psr(activeSVs);
         refCarr = carr(activeSVs);
-        
+
 
         % Calculate Predicted PSR, Carrier Frequency
         [psr,carr,unitVectors,~] = calcPsr(estStates,svStates);
@@ -50,21 +70,19 @@ if mod(time,1/50) == 0 && update
         Z = formZ(resPsr,resCarr);
 
         % Form H Matrix
-
         H = formH(unitVectors,predictedStates(7:9));
 
         % Form R Matrix
         R = formR(varPsr,varCarr);
 
         % Update Kalman Gain
-        L = calcL(H,predictedCovariance,R);
+        L = calcL(H,predictedCovariance,R./1e6);
 
         % Update Estimated States
-        updatedStates = updateState(Z,L,predictedStates);
-        estimatedStates = updatedStates;
+        estimatedStates = predictedStates - L*Z;
 
         % Update Estimated Covariance
-        estimatedCovariance = updateCovariance(predictedCovariance,L,H,R);
+        estimatedCovariance = updateCovariance(predictedCovariance,L,H,R./1e6);
 
         % Convert residuals to determinstic size
         activeIdx = find(activeSVs);
@@ -81,28 +99,9 @@ if mod(time,1/50) == 0 && update
 
     end
 
+
 else
-
-    %% Time Update
-
-    % Form Discrete State Transition Matrix (Phi)
-    Phi = formPHI(predictedStates,forces,moments,Time_Step);
-
-    % Form Noise Distribution Matrix (Gamma)
-    Gamma = formG(Time_Step);
-
-    % Form Disturbance Vector (w)
-    w = formW(S,Time_Step);
-
-    % Predict New State
-    estimatedStates = Phi*predictedStates + Gamma*w;
-
-    % Form Q
-    Qd = formQ(w,Gamma);
-
-    % Predict New Covariance
-    estimatedCovariance = Phi*predictedCovariance*Phi' + Qd;
-
+    estimatedStates = predictedStates;
 end
 end
 

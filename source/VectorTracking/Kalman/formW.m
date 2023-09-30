@@ -1,18 +1,11 @@
-function w = formW(S,timestep)
-
+function w = formW(Qd,S)
 c = 299792458;
-h_0 = 2e-25;
-h_1 = 7e-25;
-h_2 = 6e-25;
+diagS = diag(S);
+w = zeros(8,1);
 
-clockVar(1,1) = ((h_0/2)*timestep + 2*h_1*timestep^2 + (2/3)*pi^2*h_2*timestep^3);
-clockVar(1,2) = (h_1*timestep + pi^2*h_2*timestep^2);
-clockVar(2,1) = clockVar(1,2);
-clockVar(2,2) = ((h_0/(2*timestep)) + 4*h_1 + (8/3)*pi^2 * h_2*timestep);
-
-
-w = randn(size(diag(S))).*diag(S);
-w(7:8) = sqrt(clockVar)*c*randn(2,1);
+w(1:3) = randn(3,1).*sqrt(diagS(1:3));
+w(4:6) = randn(3,1).*sqrt(diagS(4:6));
+w(7:8) = sqrt(Qd(13:14,13:14))*randn(2,1);
 
 end
 

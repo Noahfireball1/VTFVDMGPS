@@ -40,17 +40,21 @@ classdef VectorTrackingPlotting < handle
 
             obj.plotResiduals();
 
+            obj.plotCovariance();
+
+            obj.plotCN0();
+
         end
 
         function plotMap(obj)
             rcvrLLA = ecef2lla(obj.outputs.rcvrStates(obj.timeIdx,1:3),'WGS84');
 
             figure('Position',[200 200 900 800])
-            geoplot(rcvrLLA(:,1),rcvrLLA(:,2),'LineWidth',obj.lw,'Color',obj.primaryColor)
-            hold on
-            geoplot(obj.outputs.estimatedStates(:,7).*(180/pi),obj.outputs.estimatedStates(:,8).*(180/pi),'LineWidth',obj.lw,'Color',obj.secondaryColor)
             geoplot(obj.outputs.truthStates(:,7).*(180/pi),obj.outputs.truthStates(:,8).*(180/pi),'LineWidth',obj.lw,'Color','k')
-            legend('Reference','Estimated','Truth')
+            hold on
+            geoplot(rcvrLLA(:,1),rcvrLLA(:,2),'LineWidth',obj.lw,'Color',obj.primaryColor)
+            geoplot(obj.outputs.estimatedStates(:,7).*(180/pi),obj.outputs.estimatedStates(:,8).*(180/pi),'LineWidth',obj.lw,'Color',obj.secondaryColor)
+            legend('Truth','Reference','Estimated')
             ax = gca;
             ax.FontSize = obj.fs;
 
@@ -328,6 +332,81 @@ classdef VectorTrackingPlotting < handle
             legend([s2(1),p2(1)],'Residual Frequencies','Mean')
             ax = gca;
             ax.FontSize = obj.fs;
+
+        end
+
+        function plotCovariance(obj)
+            for i = 1:size(obj.outputs.covariance,3)
+                velocity(i,:) = trace(obj.outputs.covariance(1:3,1:3,i));
+                omega(i,:) = trace(obj.outputs.covariance(4:6,4:6,i));
+                position(i,:) = trace(obj.outputs.covariance(7:9,7:9,i));
+                angles(i,:) = trace(obj.outputs.covariance(10:12,10:12,i));
+                clkBias(i,:) = (obj.outputs.covariance(13,13,i));
+                clkDrift(i,:) = (obj.outputs.covariance(14,14,i));
+
+            end
+            figure('Position',[400 0 900 1600])
+            tiledlayout(5,1)
+            nexttile
+            hold on
+            title('Covariance Magnitudes')
+            ylabel('Velocity [m/s]')
+            plot(obj.timeUpdateTime ,velocity,'LineWidth',obj.lw,'Color',obj.primaryColor)
+            ax = gca;
+            ax.FontSize = obj.fs;
+
+            nexttile
+            hold on
+            ylabel('Angular Rate [rad/s]')
+            plot(obj.timeUpdateTime ,omega,'LineWidth',obj.lw,'Color',obj.primaryColor)
+            ax = gca;
+            ax.FontSize = obj.fs;
+
+            nexttile
+            hold on
+            ylabel('Position [m]')
+            plot(obj.timeUpdateTime ,position,'LineWidth',obj.lw,'Color',obj.primaryColor)
+            ax = gca;
+            ax.FontSize = obj.fs;
+
+            nexttile
+            hold on
+            ylabel('Euler Angles [rad]')
+            plot(obj.timeUpdateTime ,angles,'LineWidth',obj.lw,'Color',obj.primaryColor)
+            ax = gca;
+            ax.FontSize = obj.fs;
+
+            nexttile
+            hold on
+            ylabel('Clock Terms')
+            xlabel('Time [s]')
+            plot(obj.timeUpdateTime ,clkBias,'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.timeUpdateTime ,clkDrift,'LineWidth',obj.lw,'Color',obj.secondaryColor)
+            legend('Bias [s]','Drift [s/s]')
+            ax = gca;
+            ax.FontSize = obj.fs;
+
+        end
+
+        function plotCN0(obj)
+
+            CN0idx = diff(obj.outputs.CN0,1,1) ~= 0;
+            CN0idx = find(CN0idx(obj.timeIdx(2)-1,:));
+            for i = 1:length(CN0idx)
+            CN0plot(:,i) = 10*log(obj.outputs.CN0(:,CN0idx(i)))/log(10);
+
+            end
+
+            if ~isempty(CN0idx)
+                figure('Position',[200 0 900 800])
+                hold on
+                title('Carrier to Noise Ratio')
+                ylabel('CN0 [db-Hz]')
+
+                plot(obj.timeIdx,CN0plot(obj.timeIdx,:),'LineWidth',obj.lw,'Color',obj.primaryColor)
+                ax = gca;
+                ax.FontSize = obj.fs;
+            end
 
         end
     end
