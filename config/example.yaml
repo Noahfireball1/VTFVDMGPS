@@ -10,7 +10,8 @@ aircraft:
   frequency: 400 # [Hz]
   waypoints: SCurveFlightPath
   lookaheadDistance: 50 # [m]
-  noisePSD: [0;0;0;0;0;0]
+  noiseVariance: [10e-4;10e-4;10e-4;10e-4;10e-4;10e-4;10e-4;10e-4;10e-4;10e-4;10e-4;10e-4]
+  clockType: OCXO # [LOW-TCXO;HIGH-TXCO;OCXO;RUBIDIUM;CESIUM]
   initialState:
     u: 75 # [m/s]
     v: 0 # [m/s]

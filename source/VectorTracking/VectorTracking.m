@@ -1,5 +1,5 @@
 function [estimatedStates,refStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase] = ...
-    VectorTracking(forces,moments,predictedStates,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,oldCN0,oldAmplitude,oldNoise,oldPhase,initCN0,Time_Step,S)
+    VectorTracking(forces,moments,predictedStates,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,oldCN0,oldAmplitude,oldNoise,oldPhase,initCN0,Time_Step,Qd,variance)
 
 residualPsr = nan(1,31);
 residualCarr = nan(1,31);
@@ -9,29 +9,22 @@ newCN0 = oldCN0';
 newAmplitude = oldAmplitude';
 newNoise = oldNoise';
 newPhase = oldPhase';
- refStates = nan(8,1);
-if mean(predictedStates(1:12) - receiverStates) ~= 0
-    stop  = 1;
-end
+refStates = nan(8,1);
+
 %% Time Update
+% stateNoise = sqrt(variance).*randn(6,1);
+% predictedStates(1:6) = predictedStates(1:6) + stateNoise;
 
 % Form Discrete State Transition Matrix (Phi)
 Phi = formPHI(predictedStates,forces,moments,Time_Step);
 
-% Form Noise Distribution Matrix (Gamma)
-G = formG(Time_Step);
-
 % Predict New State
 predictedStates = predictStates(predictedStates,forces,moments,Time_Step);
-
-% Form Q
-Qd = formQ(S,G,Time_Step);
+predictedStates = sqrt(Qd)*randn(14,1) + predictedStates;
 
 % Predict New Covariance
-estimatedCovariance = Phi*predictedCovariance*Phi' + Qd;
+predictedCovariance = Phi*predictedCovariance*Phi' + Qd;
 
-% Form Disturbance Vector (w)
-w = formW(Qd,S);
 %% Measurement Update
 update = 1;
 if mod(time,1/50) == 0 && update
@@ -56,7 +49,6 @@ if mod(time,1/50) == 0 && update
         refPsr = psr(activeSVs);
         refCarr = carr(activeSVs);
 
-
         % Calculate Predicted PSR, Carrier Frequency
         [psr,carr,unitVectors,~] = calcPsr(estStates,svStates);
         estPsr = psr(activeSVs);
@@ -76,13 +68,13 @@ if mod(time,1/50) == 0 && update
         R = formR(varPsr,varCarr);
 
         % Update Kalman Gain
-        L = calcL(H,predictedCovariance,R./1e6);
+        L = calcL(H,predictedCovariance,R);
 
         % Update Estimated States
         estimatedStates = predictedStates - L*Z;
 
         % Update Estimated Covariance
-        estimatedCovariance = updateCovariance(predictedCovariance,L,H,R./1e6);
+        estimatedCovariance = updateCovariance(predictedCovariance,L,H,R);
 
         % Convert residuals to determinstic size
         activeIdx = find(activeSVs);
@@ -99,9 +91,10 @@ if mod(time,1/50) == 0 && update
 
     end
 
-
 else
+
     estimatedStates = predictedStates;
+    estimatedCovariance = predictedCovariance;
 end
 end
 

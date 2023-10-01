@@ -28,8 +28,6 @@ classdef VectorTrackingPlotting < handle
 
             obj.timeIdx = 1:scale:length(obj.timeUpdateTime);
 
-
-
             obj.numMonteCarlos = 1;
 
             obj.plotMap();
@@ -43,6 +41,8 @@ classdef VectorTrackingPlotting < handle
             obj.plotCovariance();
 
             obj.plotCN0();
+
+            obj.plotMeasurementVariance();
 
         end
 
@@ -99,7 +99,7 @@ classdef VectorTrackingPlotting < handle
             hold on
             title('Angular Rates - Body Frame')
             ylabel('Roll Rate [deg/s]')
-            plot(obj.timeUpdateTime ,obj.outputs.rcvrStates(:,4)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,4)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
             plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,4)*R2D,'LineWidth',obj.lw,'Color',obj.secondaryColor)
             ax = gca;
             ax.FontSize = obj.fs;
@@ -107,7 +107,7 @@ classdef VectorTrackingPlotting < handle
             nexttile
             hold on
             ylabel('Pitch Rate [deg/s]')
-            plot(obj.timeUpdateTime ,obj.outputs.rcvrStates(:,5)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,5)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
             plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,5)*R2D,'LineWidth',obj.lw,'Color',obj.secondaryColor)
             legend('Truth','Estimated','Location','eastoutside')
             ax = gca;
@@ -403,11 +403,37 @@ classdef VectorTrackingPlotting < handle
                 title('Carrier to Noise Ratio')
                 ylabel('CN0 [db-Hz]')
 
-                plot(obj.timeIdx,CN0plot(obj.timeIdx,:),'LineWidth',obj.lw,'Color',obj.primaryColor)
+                plot(obj.timeUpdateTime(obj.timeIdx),CN0plot(obj.timeIdx,:),'LineWidth',obj.lw,'Color',obj.primaryColor)
                 ax = gca;
                 ax.FontSize = obj.fs;
             end
 
+        end
+
+        function plotMeasurementVariance(obj)
+
+            avgVarPsr = mean(obj.outputs.varPsr,2,"omitnan");
+            avgVarCarr = mean(obj.outputs.varCarr,2,"omitnan");
+
+            figure('Position',[1400 200 900 800])
+            hold on
+            title('Pseudorange Variance of In-View SVs')
+            s1 = scatter(obj.measUpdateTime ,obj.outputs.varPsr(obj.timeIdx,:),'k*');
+            p1 = plot(obj.measUpdateTime ,avgVarPsr(obj.timeIdx) ,'Color',obj.secondaryColor,LineWidth=2);
+            legend([s1(1),p1(1)],'Pseudorange Variance','Mean')
+            ylim([0 500])
+            ax = gca;
+            ax.FontSize = obj.fs;
+
+            figure('Position',[1600 200 900 800])
+            hold on
+            title('Pseudorange-Rate Variance of In-View SVs')
+            s2 = scatter(obj.measUpdateTime,obj.outputs.varCarr(obj.timeIdx,:),'k*');
+            p2 = plot(obj.measUpdateTime ,avgVarCarr(obj.timeIdx) ,'Color',obj.secondaryColor,LineWidth=2);
+            legend([s2(1),p2(1)],'Pseudorange-Rate Variance','Mean')
+            ylim([0 500])
+            ax = gca;
+            ax.FontSize = obj.fs;
         end
     end
 end
