@@ -12,18 +12,14 @@ newPhase = oldPhase';
 refStates = nan(8,1);
 
 %% Time Update
-% stateNoise = sqrt(variance).*randn(6,1);
-% predictedStates(1:6) = predictedStates(1:6) + stateNoise;
-
 % Form Discrete State Transition Matrix (Phi)
 Phi = formPHI(predictedStates,forces,moments,Time_Step);
 
 % Predict New State
-predictedStates = predictStates(predictedStates,forces,moments,Time_Step);
-predictedStates = sqrt(Qd)*randn(14,1) + predictedStates;
+[predictedStates,Qd] = predictStates(predictedStates,forces,moments,Time_Step,variance,Phi,Qd(13:14,13:14));
 
 % Predict New Covariance
-predictedCovariance = Phi*predictedCovariance*Phi' + Qd;
+predictedCovariance = Phi*predictedCovariance*Phi' + 100*Qd;
 
 %% Measurement Update
 update = 1;
@@ -92,7 +88,6 @@ if mod(time,1/50) == 0 && update
     end
 
 else
-
     estimatedStates = predictedStates;
     estimatedCovariance = predictedCovariance;
 end

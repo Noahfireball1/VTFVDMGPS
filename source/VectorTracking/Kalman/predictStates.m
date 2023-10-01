@@ -1,4 +1,4 @@
-function states = predictStates(oldStates,forces,moments,Time_Step)
+function [states,Qd] = predictStates(oldStates,forces,moments,Time_Step,variance,Phi,clkVar)
 % Constants
 e = 0.0818191910428; % eccentricity
 a = 6378137.0; % equatorial radius [meters]
@@ -57,10 +57,20 @@ omegaDot = Ic_B^-1*(moments - omega_skew*(Ic_B*[p;q;r])); % [omega_x_dot, omega_
 eulerRates = C_omega*omega_nb_b ; % [phi_dot;theta_dot;psi_dot] (radians) euler rates from body to nav
 
 % Clock term rates
-clkRates = [oldStates(14);0];
+clkNoise = sqrt(clkVar)*randn(2,1);
+clkRates = [oldStates(14) + clkNoise(1);clkNoise(2)];
 
+% Adding Noise (G*w)
+G = zeros(12,6);
+G(1:6,1:6) = eye(6);
+w = sqrt(variance);
+
+noiseXdot = [vDot;omegaDot;rDot;eulerRates]  + G*w.*randn(12,1);
+
+Qd = Phi(1:12,1:12)*G*diag(variance)*G';
+Qd = blkdiag(Qd,clkVar);
 % Integrate
-xDot = [vDot;omegaDot;rDot;eulerRates;clkRates];
+xDot = [noiseXdot;clkRates];
 states = xDot*Time_Step + oldStates;
 end
 

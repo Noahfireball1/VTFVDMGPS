@@ -47,8 +47,11 @@ switch option
         cprintf(programStyle,'\n[VTFVDMGPS]\t')
         cprintf(textStyle, 'Initializing simulations for Monte-Carlo analysis\n')
     case 11
-                cprintf(programStyle,'\n[VTFVDMGPS]\t')
+        cprintf(programStyle,'\n[VTFVDMGPS]\t')
         cprintf(textStyle, 'Loading satellite states for selected configuration\n')
+    case 12
+        cprintf(programStyle,'\n[VTFVDMGPS]\t')
+        cprintf(textStyle, 'No measurement update performed\n')
 
     otherwise
 end

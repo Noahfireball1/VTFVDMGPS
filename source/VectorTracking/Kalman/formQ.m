@@ -1,4 +1,4 @@
-function Q = formQ(stateVariance,clockType,timestep)
+function Qd = formQ(stateVariance,clockType,timestep)
 
 c = 299792458;
 switch upper(clockType)
@@ -39,12 +39,5 @@ clkVar(1,2) = (h_1*timestep + pi^2*h_2*timestep^2);
 clkVar(2,1) = clkVar(1,2);
 clkVar(2,2) = ((h_0/(2*timestep)) + 4*h_1 + (8/3)*pi^2 * h_2*timestep);
 
-veloVar = (stateVariance(1:3).*timestep);
-omegaVar = (stateVariance(4:6).*(timestep/pi));
-posVar = (stateVariance(1:3).*timestep^2*0.5./7e6);
-angleVar = (stateVariance(4:6).*(timestep^2/pi/2));
-
-Q = diag([veloVar;omegaVar;posVar;angleVar]);
-
-Q(13:14,13:14) = clkVar;
+Qd(13:14,13:14) = clkVar;
 end

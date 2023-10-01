@@ -59,7 +59,7 @@ for i = 1:general.monteCarloRuns
     upd(i)
     rndSeedi = randi(1e6,1);
     model(i) = Simulink.SimulationInput('DA40_Flight_Model');
-    model(i) = model(i).setVariable('rndSeed',1);
+    model(i) = model(i).setVariable('rndSeed',rndSeedi);
     model(i) = model(i).setVariable('refLLA',selWaypoints.refLL);
     model(i) = model(i).setVariable('Start_Time',0);
     model(i) = model(i).setVariable('End_Time',general.duration);

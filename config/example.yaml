@@ -7,10 +7,10 @@ general:
   duration: 60
   monteCarloRuns: 1
 aircraft:
-  frequency: 400 # [Hz]
+  frequency: 200 # [Hz]
   waypoints: SCurveFlightPath
   lookaheadDistance: 50 # [m]
-  noiseVariance: [10e-4;10e-4;10e-4;10e-4;10e-4;10e-4;10e-4;10e-4;10e-4;10e-4;10e-4;10e-4]
+  noiseVariance: [10e-8;10e-8;10e-8;10e-8;10e-8;10e-8]
   clockType: OCXO # [LOW-TCXO;HIGH-TXCO;OCXO;RUBIDIUM;CESIUM]
   initialState:
     u: 75 # [m/s]
