@@ -1,4 +1,4 @@
-function [estimatedStates,refStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase,svStates] = ...
+    function [estimatedStates,refStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase,svStates] = ...
     VectorTracking(forces,moments,predictedStates,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,oldCN0,oldAmplitude,oldNoise,oldPhase,initCN0,Time_Step,variance,clkVar)
 
 residualPsr = nan(1,31);
@@ -15,7 +15,7 @@ svStates = zeros(7,31);
 %% Time Update
 % Form Discrete State Transition Matrix (Phi)
 % Calculate Q
-Q = blkdiag(diag(variance)*1000,diag([1 1 1]),diag([1e4 1e4 500]),diag([250 250 500]),2000*clkVar);
+Q = diag([variance(1),variance(2),variance(3),variance(4),variance(5),variance(6),variance(7),variance(8),variance(9),variance(4),variance(5),variance(6),0,0]);
 Phi = formPHI(predictedStates,forces,moments,Time_Step);
 % Predict New State
 predictedStates = predictStates(predictedStates,forces,moments,Time_Step);
@@ -57,14 +57,17 @@ if mod(time,1/50) == 0 && update
         % Generate Correlator Residuals
         [resPsr,resCarr,varPsr,varCarr,CN0,Amplitude,Noise,Phase] = genCorrelatorResiduals(refPsr,estPsr,refCarr,estCarr,oldCN0,oldAmplitude,oldNoise,activeSVs,oldPhase,initCN0);
 
+        % Calculate Variance in Angles
+        varAng = calcVarAng(CN0);
+
         % Form Z Array
-        Z = formZ(resPsr,resCarr,receiverStates);
+        Z = formZ(resPsr,resCarr,receiverStates,predictedStates);
 
         % Form H Matrix
         H = formH(unitVectors,predictedStates(7:9));
 
         % Form R Matrix
-        R = formR(varPsr,varCarr);
+        R = formR(varPsr,varCarr,varAng);
 
         % Update Kalman Gain
         L = calcL(H,predictedCovariance,R);
@@ -74,6 +77,9 @@ if mod(time,1/50) == 0 && update
 
         % Update Estimated Covariance
         estimatedCovariance = updateCovariance(predictedCovariance,L,H,R);
+        if time == 5
+            stop = 1;
+        end
 
         % Convert residuals to determinstic size
         activeIdx = find(activeSVs);
@@ -93,6 +99,7 @@ if mod(time,1/50) == 0 && update
 else
     estimatedStates = predictedStates;
     estimatedCovariance = predictedCovariance;
+
 end
 
 % if estimatedStates(10) > 30*pi/180

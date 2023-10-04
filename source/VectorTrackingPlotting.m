@@ -34,17 +34,17 @@ classdef VectorTrackingPlotting < handle
 
             obj.plotStates();
 
-            obj.plotErrors();
+            % obj.plotErrors();
 
-            obj.plotResiduals();
+            % obj.plotResiduals();
 
             obj.plotCovariance();
 
             obj.plotCN0();
 
-            obj.plotMeasurementVariance();
+            % obj.plotMeasurementVariance();
 
-            obj.satellitePlot();
+            % obj.satellitePlot();
 
         end
 

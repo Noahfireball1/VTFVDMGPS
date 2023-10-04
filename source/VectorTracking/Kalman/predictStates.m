@@ -57,7 +57,7 @@ omega_dot = Ic_B^-1*(moments - omega_skew*(Ic_B*[p;q;r])); % [omega_x_dot, omega
 euler_rates = C_omega*omega_nb_b ; % [phi_dot;theta_dot;psi_dot] (radians) euler rates from body to nav
 
 % Clock Terms
-clkRates = [oldStates(14);0];
+clkRates = [0;0];
 
 
 % Integrate

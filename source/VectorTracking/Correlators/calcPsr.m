@@ -1,5 +1,5 @@
 function [psr,psrDot,unitVectors,activeSVs] = calcPsr(usrStates,svStates)
-c = 299792458;
+
 clkBias = usrStates(7);
 clkDrift = usrStates(8);
 
@@ -12,13 +12,13 @@ svVel = [svStates(2,:);svStates(4,:);svStates(6,:)]';
 
 range = sqrt(dx.^2 + dy.^2 + dz.^2);
 
-psr = range;% + clkBias;
+psr = range + clkBias;
 
 unitVectors = [dx./range; dy./range; dz./range];
 
 for i = 1:length(psr)
 
-    psrDot(i) =  unitVectors(:,i)'*(usrVel - svVel(i,:)'); %+ clkDrift;
+    psrDot(i) =  unitVectors(:,i)'*(usrVel - svVel(i,:)') + clkDrift;
 
 end
 
