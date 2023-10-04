@@ -1,4 +1,4 @@
-function states = truthModelStateUpdate(forces,moments,oldStates,Time_Step)
+function states = truthModelStateUpdate(forces,moments,oldStates,Time_Step,variance,clkVar)
 % Constants
 e = 0.0818191910428; % eccentricity
 a = 6378137.0; % equatorial radius [meters]
@@ -48,7 +48,7 @@ omega_en_n_skew = [0 -omega_en_n(3) omega_en_n(2); omega_en_n(3) 0 -omega_en_n(1
 
 omega_nb_b = [p;q;r] - C_n_b*(omega_ie_n + omega_en_n);
 % Linear Accelerations
-vdot = C_b_n*(forces/m) - (2*omega_ie_n_skew + omega_en_n_skew)*[u;v;w]; % [Nv;Ev;Dv] (meters) Velocity derivative from earth to body in the nav frame
+vdot = C_b_n*(forces/m) - (2*omega_ie_n_skew + omega_en_n_skew)*[u;v;w] + sqrt(variance).*randn(3,1); % [Nv;Ev;Dv] (meters) Velocity derivative from earth to body in the nav frame
 
 % Angular Accelerations
 omega_dot = Ic_B^-1*(moments - omega_skew*(Ic_B*[p;q;r])); % [omega_x_dot, omega_y_dot, omega_z_dot] from inertial to body in the body frame
@@ -56,8 +56,14 @@ omega_dot = Ic_B^-1*(moments - omega_skew*(Ic_B*[p;q;r])); % [omega_x_dot, omega
 % Euler Rates
 euler_rates = C_omega*omega_nb_b ; % [phi_dot;theta_dot;psi_dot] (radians) euler rates from body to nav
 
+
+
 % Integrate
-xDot = [vdot;omega_dot;rdot;euler_rates];
+xDot = [vdot;omega_dot;rdot;euler_rates;0;0];
 states = xDot*Time_Step + oldStates;
+
+clkNoise = sqrt(clkVar)*randn(2,1);
+states(13) = oldStates(13) + oldStates(14)*Time_Step + clkNoise(1);
+states(14) = oldStates(14) + clkNoise(2);
 
 end

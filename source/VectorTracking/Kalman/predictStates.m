@@ -1,4 +1,4 @@
-function [states,Qd] = predictStates(oldStates,forces,moments,Time_Step,variance,Phi,clkVar)
+function states = predictStates(oldStates,forces,moments,Time_Step)
 % Constants
 e = 0.0818191910428; % eccentricity
 a = 6378137.0; % equatorial radius [meters]
@@ -41,36 +41,27 @@ omega_ie_n = [omega_ie*cos(long);0;-omega_ie*sin(long)]; % [checked]
 omega_ie_n_skew = [0 -omega_ie_n(3) omega_ie_n(2); omega_ie_n(3) 0 -omega_ie_n(1); -omega_ie_n(2) omega_ie_n(1) 0];
 
 % Linear Velocities
-rDot = [u/(R_N + alt);v/((R_E + alt)*cos(long));-w]; % [lat;long;alt] (radians,meters) Position derivative from earth to body in the nav frame
+rdot = [u/(R_N + alt);v/((R_E + alt)*cos(long));-w]; % [lat;long;alt] (radians,meters) Position derivative from earth to body in the nav frame
 
-omega_en_n = [rDot(1)*cos(long);-rDot(2);rDot(1)*sin(long)]; % [checked]
+omega_en_n = [rdot(1)*cos(long);-rdot(2);rdot(1)*sin(long)]; % [checked]
 omega_en_n_skew = [0 -omega_en_n(3) omega_en_n(2); omega_en_n(3) 0 -omega_en_n(1); -omega_en_n(2) omega_en_n(1) 0];
 
 omega_nb_b = [p;q;r] - C_n_b*(omega_ie_n + omega_en_n);
 % Linear Accelerations
-vDot = C_b_n*(forces/m) - (2*omega_ie_n_skew + omega_en_n_skew)*[u;v;w]; % [Nv;Ev;Dv] (meters) Velocity derivative from earth to body in the nav frame
+vdot = C_b_n*(forces/m) - (2*omega_ie_n_skew + omega_en_n_skew)*[u;v;w]; % [Nv;Ev;Dv] (meters) Velocity derivative from earth to body in the nav frame
 
 % Angular Accelerations
-omegaDot = Ic_B^-1*(moments - omega_skew*(Ic_B*[p;q;r])); % [omega_x_dot, omega_y_dot, omega_z_dot] from inertial to body in the body frame
+omega_dot = Ic_B^-1*(moments - omega_skew*(Ic_B*[p;q;r])); % [omega_x_dot, omega_y_dot, omega_z_dot] from inertial to body in the body frame
 
 % Euler Rates
-eulerRates = C_omega*omega_nb_b ; % [phi_dot;theta_dot;psi_dot] (radians) euler rates from body to nav
+euler_rates = C_omega*omega_nb_b ; % [phi_dot;theta_dot;psi_dot] (radians) euler rates from body to nav
 
-% Clock term rates
-clkNoise = sqrt(clkVar)*randn(2,1);
-clkRates = [oldStates(14) + clkNoise(1);clkNoise(2)];
+% Clock Terms
+clkRates = [oldStates(14);0];
 
-% Adding Noise (G*w)
-G = zeros(12,6);
-G(1:6,1:6) = eye(6);
-w = sqrt(variance);
 
-noiseXdot = [vDot;omegaDot;rDot;eulerRates]  + G*w.*randn(12,1);
-
-Qd = Phi(1:12,1:12)*G*diag(variance)*G';
-Qd = blkdiag(Qd,clkVar);
 % Integrate
-xDot = [noiseXdot;clkRates];
+xDot = [vdot;omega_dot;rdot;euler_rates;clkRates];
 states = xDot*Time_Step + oldStates;
 end
 

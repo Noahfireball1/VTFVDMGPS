@@ -1,5 +1,5 @@
-function [estimatedStates,refStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase] = ...
-    VectorTracking(forces,moments,predictedStates,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,oldCN0,oldAmplitude,oldNoise,oldPhase,initCN0,Time_Step,Qd,variance)
+function [estimatedStates,refStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase,svStates] = ...
+    VectorTracking(forces,moments,predictedStates,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,oldCN0,oldAmplitude,oldNoise,oldPhase,initCN0,Time_Step,variance,clkVar)
 
 residualPsr = nan(1,31);
 residualCarr = nan(1,31);
@@ -10,30 +10,33 @@ newAmplitude = oldAmplitude';
 newNoise = oldNoise';
 newPhase = oldPhase';
 refStates = nan(8,1);
+svStates = zeros(7,31);
 
 %% Time Update
 % Form Discrete State Transition Matrix (Phi)
+% Calculate Q
+Q = blkdiag(diag(variance)*1000,diag([1 1 1]),diag([1e4 1e4 500]),diag([250 250 500]),2000*clkVar);
 Phi = formPHI(predictedStates,forces,moments,Time_Step);
-
 % Predict New State
-[predictedStates,Qd] = predictStates(predictedStates,forces,moments,Time_Step,variance,Phi,Qd(13:14,13:14));
+predictedStates = predictStates(predictedStates,forces,moments,Time_Step);
 
 % Predict New Covariance
-predictedCovariance = Phi*predictedCovariance*Phi' + 100*Qd;
+predictedCovariance = Phi*predictedCovariance*Phi' + Phi*Q*Phi'*Time_Step;
 
 %% Measurement Update
 update = 1;
 if mod(time,1/50) == 0 && update
     try
         % Convert Receiver States to ECEF
+
         refStates(1:3) = lla2ecef(receiverStates(7:9)'.*(180/pi),'WGS84')';
-        refStates(4:6) = ned2ecefv(receiverStates(1),receiverStates(2),receiverStates(3),receiverStates(7),receiverStates(8),'radians');
-        refStates(7) = 0;
-        refStates(8) = 0;
+        [refStates(4,1),refStates(5,1),refStates(6,1)] = ned2ecefv(receiverStates(1),receiverStates(2),receiverStates(3),receiverStates(7),receiverStates(8),'radians');
+        refStates(7) = receiverStates(13);
+        refStates(8) = receiverStates(14);
 
         % Convert Predicted States to ECEF
         estStates(1:3,1) = lla2ecef(predictedStates(7:9)'.*(180/pi),'WGS84');
-        estStates(4:6,1) = ned2ecefv(predictedStates(1),predictedStates(2),predictedStates(3),predictedStates(7),predictedStates(8),'radians');
+        [estStates(4,1),estStates(5,1),estStates(6,1)] = ned2ecefv(predictedStates(1),predictedStates(2),predictedStates(3),predictedStates(7),predictedStates(8),'radians');
         estStates(7,1) = predictedStates(13);
         estStates(8,1) = predictedStates(14);
 
@@ -55,7 +58,7 @@ if mod(time,1/50) == 0 && update
         [resPsr,resCarr,varPsr,varCarr,CN0,Amplitude,Noise,Phase] = genCorrelatorResiduals(refPsr,estPsr,refCarr,estCarr,oldCN0,oldAmplitude,oldNoise,activeSVs,oldPhase,initCN0);
 
         % Form Z Array
-        Z = formZ(resPsr,resCarr);
+        Z = formZ(resPsr,resCarr,receiverStates);
 
         % Form H Matrix
         H = formH(unitVectors,predictedStates(7:9));
@@ -91,6 +94,40 @@ else
     estimatedStates = predictedStates;
     estimatedCovariance = predictedCovariance;
 end
-end
+
+% if estimatedStates(10) > 30*pi/180
+%     estimatedStates(10) = 30*pi/180;
+% elseif estimatedStates(10) < -30*pi/180
+%     estimatedStates(10) = -30*pi/180;
+% end
+% 
+% if estimatedStates(11) > 30*pi/180
+%     estimatedStates(11) = 30*pi/180;
+% elseif estimatedStates(11) < -30*pi/180
+%     estimatedStates(11) = -30*pi/180;
+% end
+% 
+% if estimatedStates(12) > 35*pi/180
+%     estimatedStates(12) = 35*pi/180;
+% elseif estimatedStates(12) < -35*pi/180
+%     estimatedStates(12) = -35*pi/180;
+% end
+% 
+% if estimatedStates(4) > 20*pi/180
+%     estimatedStates(4) = 20*pi/180;
+% elseif estimatedStates(4) < -20*pi/180
+%     estimatedStates(4) = -20*pi/180;
+% end
+% 
+% if estimatedStates(5) > 20*pi/180
+%     estimatedStates(5) = 20*pi/180;
+% elseif estimatedStates(5) < -20*pi/180
+%     estimatedStates(5) = -20*pi/180;
+% end
+% if estimatedStates(6) > 20*pi/180
+%     estimatedStates(6) = 20*pi/180;
+% elseif estimatedStates(6) < -20*pi/180
+%     estimatedStates(6) = -20*pi/180;
+% end
 
 

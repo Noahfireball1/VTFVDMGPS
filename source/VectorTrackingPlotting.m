@@ -44,6 +44,8 @@ classdef VectorTrackingPlotting < handle
 
             obj.plotMeasurementVariance();
 
+            obj.satellitePlot();
+
         end
 
         function plotMap(obj)
@@ -121,8 +123,8 @@ classdef VectorTrackingPlotting < handle
             ax.FontSize = obj.fs;
 
             %% NED Positions
-            truthNED = lla2ned(obj.outputs.truthStates(:,7:9),obj.outputs.truthStates(1,7:9),"ellipsoid");
-            noiseNED = lla2ned(obj.outputs.estimatedStates(:,7:9),obj.outputs.estimatedStates(1,7:9),"ellipsoid");
+            truthNED = lla2ned(obj.outputs.truthStates(:,7:9),[obj.outputs.truthStates(1,7:8), 0],"ellipsoid");
+            noiseNED = lla2ned(obj.outputs.estimatedStates(:,7:9),[obj.outputs.estimatedStates(1,7:8), 0],"ellipsoid");
             figure('Position',[800 200 900 800])
             tiledlayout(3,1)
             nexttile
@@ -188,16 +190,19 @@ classdef VectorTrackingPlotting < handle
             nexttile
             hold on
             title('Clock Bias and Drift')
-            ylabel('Bias [s]')
-            plot(obj.timeUpdateTime ,obj.outputs.estimatedStates(:,13),'LineWidth',obj.lw,'Color',obj.secondaryColor)
+            ylabel('Bias [m]')
+            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,13),'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,13),'LineWidth',obj.lw,'Color',obj.secondaryColor)
             ax = gca;
             ax.FontSize = obj.fs;
 
             nexttile
             hold on
-            ylabel('Drift [s/s]')
+            ylabel('Drift [m/s]')
             xlabel('Time [s]')
-            plot(obj.timeUpdateTime ,obj.outputs.estimatedStates(:,14),'LineWidth',obj.lw,'Color',obj.secondaryColor)
+            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,14),'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,14),'LineWidth',obj.lw,'Color',obj.secondaryColor)
+            legend('Truth','Estimated','Location','eastoutside')
             ax = gca;
             ax.FontSize = obj.fs;
 
@@ -324,7 +329,7 @@ classdef VectorTrackingPlotting < handle
                 s1 = scatter(obj.measUpdateTime ,obj.outputs.resPsr(obj.timeIdx,:),'k*');
                 p1 = plot(obj.measUpdateTime ,avgResPsr(obj.timeIdx) ,'Color',obj.secondaryColor,LineWidth=2);
                 xlabel('Time [s]')
-                ylabel('Variance [m]')
+                ylabel('Residuals [m]')
                 % legend([s1(1),p1(1)],'Residual Pseudoranges','Mean')
                 ax = gca;
                 ax.FontSize = obj.fs;
@@ -335,7 +340,7 @@ classdef VectorTrackingPlotting < handle
                 s2 = scatter(obj.measUpdateTime,obj.outputs.resCarr(obj.timeIdx,:),'k*');
                 p2 = plot(obj.measUpdateTime ,avgResCarr(obj.timeIdx) ,'Color',obj.secondaryColor,LineWidth=2);
                 xlabel('Time [s]')
-                ylabel('Variance [m/s]')
+                ylabel('Residuals [m/s]')
                 % legend([s2(1),p2(1)],'Residual Frequencies','Mean')
                 ax = gca;
                 ax.FontSize = obj.fs;
@@ -441,7 +446,7 @@ classdef VectorTrackingPlotting < handle
                 p1 = plot(obj.measUpdateTime ,avgVarPsr(obj.timeIdx) ,'Color',obj.secondaryColor,LineWidth=2);
                 % legend([s1(1),p1(1)],'Pseudorange Variance','Mean')
                 xlabel('Time [s]')
-                ylabel('Residuals [m]')
+                ylabel('Variance [m]')
                 ylim([minVarPsr*0.8 maxVarPsr*1.2])
                 ax = gca;
                 ax.FontSize = obj.fs;
@@ -453,13 +458,37 @@ classdef VectorTrackingPlotting < handle
                 p2 = plot(obj.measUpdateTime ,avgVarCarr(obj.timeIdx) ,'Color',obj.secondaryColor,LineWidth=2);
                 % legend([s2(1),p2(1)],'Pseudorange-Rate Variance','Mean')
                 xlabel('Time [s]')
-                ylabel('Residuals [m/s]')
+                ylabel('Variance [m/s]')
                 ylim([minVarCarr*0.8 maxVarCarr*1.2])
                 ax = gca;
                 ax.FontSize = obj.fs;
             else
                 printText(12);
             end
+        end
+
+        function satellitePlot(obj)
+            figure
+
+            truthLat = obj.outputs.truthStates(:,7).*(180/pi);
+            truthLong = obj.outputs.truthStates(:,8).*(180/pi);
+            truthalt = obj.outputs.truthStates(:,9);
+
+            noiseLat = obj.outputs.estimatedStates(:,7).*(180/pi);
+            noiseLong = obj.outputs.estimatedStates(:,8).*(180/pi);
+            noisealt = obj.outputs.estimatedStates(:,9);
+            count = 1;
+            for i = obj.timeIdx
+                [svaz,svel,~] = ecef2aer(obj.outputs.svStates(1,:,i),obj.outputs.svStates(3,:,i),obj.outputs.svStates(5,:,i),truthLat(i),truthLong(i),truthalt(i),wgs84Ellipsoid("meter"),"degrees");
+                count = count + 1;
+                idx = svel > 10;
+                svel_truth(:,count) = svel(idx);
+                svaz_truth(:,count) = svaz(idx);
+                
+            end
+
+skyplot(svaz_truth(:,2),svel_truth(:,2))
+
         end
     end
 end

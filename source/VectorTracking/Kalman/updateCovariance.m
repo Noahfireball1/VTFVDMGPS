@@ -1,6 +1,6 @@
 function p_m = updateCovariance(p_m,L,H,R)
 
-p_m = (eye(size(p_m)) - L*H)*p_m*(eye(size(p_m)) - L*H)' + L*R*L';
+p_m = (eye(size(p_m)) - L*H)*p_m;
 
 end
 

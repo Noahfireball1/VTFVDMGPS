@@ -1,6 +1,7 @@
-function Q = formQ(stateVariance,clockType,timestep)
+function clkVar = formClkVariance(clockType,timestep)
 
 c = 299792458;
+
 switch upper(clockType)
     case 'LOW-TCXO'
         h_0 = 2e-19;
@@ -38,4 +39,7 @@ clkVar(1,1) = ((h_0/2)*timestep + 2*h_1*timestep^2 + (2/3)*pi^2*h_2*timestep^3);
 clkVar(1,2) = (h_1*timestep + pi^2*h_2*timestep^2);
 clkVar(2,1) = clkVar(1,2);
 clkVar(2,2) = ((h_0/(2*timestep)) + 4*h_1 + (8/3)*pi^2 * h_2*timestep);
+
+clkVar = clkVar*c*c;
+
 end
