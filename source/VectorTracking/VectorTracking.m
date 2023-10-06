@@ -12,52 +12,79 @@ newPhase = oldPhase';
 refStates = nan(8,1);
 svStates = zeros(7,31);
 
+e = 0.0818191910428; % eccentricity
+R_0 = 6378137.0; % equatorial radius [meters]
+
 %% Propagate Receiver States
-receiverStates = truthModelStateUpdate(trueF_ib_b,trueM_ib_b,receiverStates,Time_Step,variance,clkVar);
+refStates_n = equationsOfMotionWithNoise(receiverStates,trueF_ib_b,trueM_ib_b,Time_Step,variance,clkVar);
+
+% For Conversion to ECEF Frame
+trueLat = refStates_n(7);
+trueLong = refStates_n(8);
+trueAlt = refStates_n(9);
+
+% Tranverse Radius of Curvature (Groves Eq. 2.106)
+trueR_E = (R_0)/(sqrt(1 - (e^2)*sin(trueLat)^2));
 
 %% Time Update
-% Form Discrete State Transition Matrix (Phi)
-% Calculate Q
-Q = blkdiag(diag([variance(1),variance(2),variance(3)...
-    ,0.001,0.001,0.001 ...
-    ,0,0,0 ...
-    ,0.001 0.001 0.001])...
-    ,clkVar);
-% Q = blkdiag(diag([variance(1) variance(2), variance(3)]),zeros(9),clkVar);
 
 % Predict New State
-predictedStates = predictStates(predictedStates,forces,moments,Time_Step);
-Phi = formPHI(predictedStates,forces,moments,Time_Step);
+estStates_n = equationsOfMotion(predictedStates,forces,moments,Time_Step);
+
+% For Conversion to ECEF Frame
+estiLat = estStates_n(7);
+estiLong = estStates_n(8);
+estiAlt = estStates_n(9);
+
+% Tranverse Radius of Curvature (Groves Eq. 2.106)
+estiR_E = (R_0)/(sqrt(1 - (e^2)*sin(estiLat)^2));
+
+% Form Discrete State Transition Matrix (Phi)
+Phi = formPHI(estStates_n,forces,moments,Time_Step);
+
 % Predict New Covariance
-predictedCovariance = Phi*predictedCovariance*Phi' + Phi*Q*Phi';
+predictedCovariance = Phi*predictedCovariance*Phi' + Q;
 
 %% Measurement Update
 update = 1;
 if mod(time,1/50) == 0 && update
     try
-        % Convert Receiver States to ECEF
+        %% Convert True States to ECEF Frame [Positions; Velocities; Clock Bias; Clock Drift]
 
-        refStates(1:3) = lla2ecef(receiverStates(7:9)'.*(180/pi),'WGS84')';
-        [refStates(4,1),refStates(5,1),refStates(6,1)] = ned2ecefv(receiverStates(1),receiverStates(2),receiverStates(3),receiverStates(7),receiverStates(8),'radians');
-        refStates(7) = receiverStates(13);
-        refStates(8) = receiverStates(14);
+        % Position Groves (Eq. 2.112)
+        refStates_e(1:3) = [(trueR_E + trueAlt)*cos(trueLat)*cos(trueLong);...
+            (trueR_E + alt)*cos(trueLat)*sin(trueLong);...
+            ((1 - e^2)*trueR_E + alt)*sin(trueLat)];
 
-        % Convert Predicted States to ECEF
-        estStates(1:3,1) = lla2ecef(predictedStates(7:9)'.*(180/pi),'WGS84');
-        [estStates(4,1),estStates(5,1),estStates(6,1)] = ned2ecefv(predictedStates(1),predictedStates(2),predictedStates(3),predictedStates(7),predictedStates(8),'radians');
-        estStates(7,1) = predictedStates(13);
-        estStates(8,1) = predictedStates(14);
+        % Velocity Groves (Eq. 2.150)
+        refStates_e(4:6) = trueC_n_e*refStates_n(1:3);
 
-        % Pull Current Satellite States
+        % Clock Terms
+        refStates_e(7:8) = refStates_n(7:8);
+
+        %% Convert Estimated States to ECEF Frame [Positions; Velocities; Clock Bias; Clock Drift]
+
+        % Position Groves (Eq. 2.112)
+        estStates_e(1:3) = [(estiR_E + estiAlt)*cos(estiLat)*cos(estiLong);...
+            (estiR_E + estiAlt)*cos(estiLat)*sin(estiLong);...
+            ((1 - e^2)*estiR_E + estiAlt)*sin(estiLat)];
+
+        % Velocity Groves (Eq. 2.150)
+        estStates_e(4:6) = estiC_n_e*estStates_n(1:3);
+
+        % Clock Terms
+        estStates_e(7:8) = estStates_n(7:8);
+
+        %% Pull Current Satellite States
         svStates = genSatellitesStates(time,year,month,day,rinexFilePath);
 
         % Calculate Reciever PSR, Carrier Frequency, Unit Vectors
-        [psr,carr,~,activeSVs] = calcPsr(refStates,svStates);
+        [psr,carr,~,activeSVs] = calcPsr(refStates_e,svStates);
         refPsr = psr(activeSVs);
         refCarr = carr(activeSVs);
 
         % Calculate Predicted PSR, Carrier Frequency
-        [psr,carr,unitVectors,~] = calcPsr(estStates,svStates);
+        [psr,carr,unitVectors,~] = calcPsr(estStates_e,svStates);
         estPsr = psr(activeSVs);
         estCarr = carr(activeSVs);
 
