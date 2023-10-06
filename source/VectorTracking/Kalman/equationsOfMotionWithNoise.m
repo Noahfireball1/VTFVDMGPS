@@ -82,7 +82,7 @@ euler_rates = C_omega*omega_nb_b ;
 clkRates = [oldStates(14);0];
 
 % Integrate and Add Noise
-noiseTerms = blkdiag(variance,clkVar);
+noiseTerms = blkdiag(diag(variance),clkVar);
 xDot = [vdot;omega_dot;rdot;euler_rates;clkRates] + sqrt(noiseTerms)*randn(14,1);
 states = xDot*Time_Step + oldStates;
 end

@@ -1,5 +1,6 @@
-function [estimatedStates,receiverStates,refStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase,svStates] = ...
-    VectorTracking(forces,moments,predictedStates,trueF_ib_b,trueM_ib_b,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,oldCN0,oldAmplitude,oldNoise,oldPhase,initCN0,Time_Step,variance,clkVar)
+function [estimatedStates,receiverStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase,svStates] = ...
+    VectorTracking(forces,moments,predictedStates,trueF_ib_b,trueM_ib_b,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,oldCN0,oldAmplitude,oldNoise,...
+    oldPhase,initCN0,Time_Step,variance,clkVar,Q)
 
 residualPsr = nan(1,31);
 residualCarr = nan(1,31);
@@ -9,7 +10,6 @@ newCN0 = oldCN0';
 newAmplitude = oldAmplitude';
 newNoise = oldNoise';
 newPhase = oldPhase';
-refStates = nan(8,1);
 svStates = zeros(7,31);
 
 e = 0.0818191910428; % eccentricity
@@ -53,7 +53,7 @@ estiR_E = (R_0)/(sqrt(1 - (e^2)*sin(estiLat)^2));
 Phi = formPHI(estStates_n,forces,moments,Time_Step);
 
 % Predict New Covariance
-predictedCovariance = Phi*predictedCovariance*Phi' + Q;
+predictedCovariance = Phi*predictedCovariance*Phi' + blkdiag(Q(1:12,1:12)*Time_Step,clkVar);
 
 %% Measurement Update
 update = 1;
@@ -63,14 +63,14 @@ if mod(time,1/50) == 0 && update
 
         % Position Groves (Eq. 2.112)
         refStates_e(1:3) = [(trueR_E + trueAlt)*cos(trueLat)*cos(trueLong);...
-            (trueR_E + alt)*cos(trueLat)*sin(trueLong);...
-            ((1 - e^2)*trueR_E + alt)*sin(trueLat)];
+            (trueR_E + trueAlt)*cos(trueLat)*sin(trueLong);...
+            ((1 - e^2)*trueR_E + trueAlt)*sin(trueLat)];
 
         % Velocity Groves (Eq. 2.150)
         refStates_e(4:6) = trueC_n_e*refStates_n(1:3);
 
         % Clock Terms
-        refStates_e(7:8) = refStates_n(7:8);
+        refStates_e(7:8) = refStates_n(13:14);
 
         %% Convert Estimated States to ECEF Frame [Positions; Velocities; Clock Bias; Clock Drift]
 
@@ -83,7 +83,7 @@ if mod(time,1/50) == 0 && update
         estStates_e(4:6) = estiC_n_e*estStates_n(1:3);
 
         % Clock Terms
-        estStates_e(7:8) = estStates_n(7:8);
+        estStates_e(7:8) = estStates_n(13:14);
 
         %% Pull Current Satellite States
         svStates = genSatellitesStates(time,year,month,day,rinexFilePath);
@@ -105,7 +105,7 @@ if mod(time,1/50) == 0 && update
         Z = formZ(resPsr,resCarr);
 
         % Form H Matrix
-        H = formH(unitVectors(:,activeSVs),predictedStates(7:9));
+        H = formH(unitVectors(:,activeSVs),estStates_n(7:9));
 
         % Form R Matrix
         R = formR(varPsr,varCarr);
@@ -114,7 +114,7 @@ if mod(time,1/50) == 0 && update
         L = calcL(H,predictedCovariance,R);
 
         % Update Estimated States
-        estimatedStates = predictedStates - L*Z;
+        estimatedStates = estStates_n - L*Z;
 
         % Update Estimated Covariance
         estimatedCovariance = updateCovariance(predictedCovariance,L,H,R);
@@ -129,21 +129,17 @@ if mod(time,1/50) == 0 && update
         newAmplitude(activeIdx) = Amplitude;
         newNoise(activeIdx) = Noise;
         newPhase(activeIdx) = Phase;
-        if time == 13
-            stop = 1;
-        end
     catch
         sprintf('%f',time)
 
     end
 
 else
-    estimatedStates = predictedStates;
+    estimatedStates = estStates_n;
     estimatedCovariance = predictedCovariance;
 
 end
-
-
+receiverStates = refStates_n;
 
 end
 

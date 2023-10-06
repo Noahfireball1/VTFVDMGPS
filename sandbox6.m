@@ -9,7 +9,7 @@ e = 0.0818191910428; % eccentricity
 a = 6378137.0; % equatorial radius [meters]
 omega_ie = 7.292115e-5; % Earth's rotation rate [rad/s]
 
-syms u v w p q r lat long alt phi theta ps Ixx Iyy Izz fb1 fb2 fb3 mb1 mb2 mb3 m omega_ie a e
+syms u v w p q r lat long alt phi theta ps Ixx Iyy Izz fb1 fb2 fb3 mb1 mb2 mb3 m omega_ie R_0 e clkBias clkDrift
 
 % Constants
 
@@ -26,43 +26,72 @@ syms u v w p q r lat long alt phi theta ps Ixx Iyy Izz fb1 fb2 fb3 mb1 mb2 mb3 m
 % phi = X(10);
 % theta = X(11);
 % ps = X(12);
+forces = [fb1;fb2;fb3];
 
-omega_skew = formskewsym([p;q;r]);
-C_omega = [1 tan(theta)*sin(phi) tan(theta)*cos(phi);...
-    0 cos(phi) -sin(phi);...
-    0 sin(phi)/cos(theta) cos(phi)/cos(theta)];
+Ic_B = diag([Ixx Iyy Izz]);
+
+moments = [mb1;mb2;mb3];
+omega_skew = [0 -r q; r 0 -p; -q p 0];
+
+% Rotation Matrix for Rotating Angular Rates into Euler Rates (Groves Eq. 2.58)
+C_omega = [1 tan(theta)*sin(phi) tan(theta)*cos(phi);0 cos(phi) -sin(phi);0 sin(phi)/cos(theta) cos(phi)/cos(theta)];
+
+% Rotation Matrix for Rotating Vectors from Navigation Frame to Body Frame (Groves Eq. 2.22)
 C_n_b = [1 0 0;0 cos(phi) sin(phi); 0 -sin(phi) cos(phi)]*...
     [cos(theta) 0 -sin(theta); 0 1 0; sin(theta) 0 cos(theta)]*...
     [cos(ps) sin(ps) 0; -sin(ps) cos(ps) 0; 0 0 1];
 C_b_n = C_n_b';
 
-R_N = (a*(1-e^2))/(1-e^2*sin(lat)^2)^(3/2); % [checked]
-R_E = (a)/(1 - e^2*sin(lat)^2)^(1/2); % [checked]
 
+% Meridian Radius of Curvature (Groves Eq. 2.105)
+R_N = (R_0*(1-e^2))/(1 - (e^2)*sin(lat)^2)^(3/2);
 
-omega_ie_n_skew = [0 sin(lat) 0;-sin(lat) 0 -cos(lat); 0 cos(lat) 0]*omega_ie;
-omega_ie_n = [omega_ie*cos(lat);0;-omega_ie*sin(lat)];
+% Tranverse Radius of Curvature (Groves Eq. 2.106)
+R_E = (R_0)/(sqrt(1 - (e^2)*sin(lat)^2));
 
-F_B = [fb1;fb2;fb3];
-M_B = [mb1;mb2;mb3];
-Ic_B = [Ixx 0 0; 0 Iyy 0; 0 0 Izz];
+% Earth's Rotation with Respect to the Navigation Frame in Skew Form (Groves Eq. 5.41)
+omega_ie_n_skew = [0 sin(lat) 0;...
+    -sin(lat) 0 -cos(lat);...
+    0 cos(lat) 0]*omega_ie;
 
-rdot = [u/(R_N + alt);v/((R_E + alt)*cos(lat));-w]; % [lat;long;alt] (radians,meters) Position derivative from earth to body in the nav frame
+% Earth's Rotaion with Respect to the Navigation Frame in Vector Form (Groves 2.123)
+omega_ie_n = [omega_ie*cos(lat);...
+    0;...
+    -omega_ie*sin(lat)];
 
-omega_en_n = [v/(R_E + alt); -u/(R_N + alt); -v*tan(lat)/(R_E + alt)]; % [checked]
-omega_en_n_skew = [0 -omega_en_n(3) omega_en_n(2); omega_en_n(3) 0 -omega_en_n(1); -omega_en_n(2) omega_en_n(1) 0];
+% Transport Rate with Respect to the Navigation Frame in Vector Form (Groves Eq. 5.44)
+omega_en_n = [v/(R_E + alt);...
+    -u/(R_N + alt);...
+    (-v*tan(lat))/(R_E + alt)];
 
+% Transport Rate with Respect to the Navigation Frame in Skew Form (Groves Eq. 5.44)
+omega_en_n_skew = [0 -omega_en_n(3) omega_en_n(2);...
+    omega_en_n(3) 0 -omega_en_n(1);...
+    -omega_en_n(2) omega_en_n(1) 0];
+
+% Curvilinear Position Derivatives (Groves Eq. 2.111) [radians]
+rdot = [u/(R_N + alt);...
+    v/((R_E + alt)*cos(lat));...
+    -w];
+
+% Euler Angle Derivatives (Groves Eq. 5.45) [radians]
 omega_nb_b = [p;q;r] - C_n_b*(omega_ie_n + omega_en_n);
 
-vdot = C_b_n*(F_B/m) - (2*omega_ie_n_skew + omega_en_n_skew)*[u;v;w]; % [Nv;Ev;Dv] (meters) Velocity derivative from earth to body in the nav frame
+% Velocity Derivates (Groves Eq. 5.53)
+vdot = -(omega_en_n_skew + 2*omega_ie_n_skew)*[u;v;w] + C_b_n*(forces/m);
 
-euler_rates = C_omega*omega_nb_b ; % [phi_dot;theta_dot;psi_dot] (radians) euler rates from body to nav
+% Angular Rate Derivatives with Respect to the Body Frame (Khaghani 2016, Eq. 29)
+omega_dot = Ic_B^-1*(moments - omega_skew*(Ic_B*[p;q;r]));
 
-omega_dot = Ic_B^-1*(M_B - omega_skew*(Ic_B*[p;q;r])); % [omega_x_dot, omega_y_dot, omega_z_dot] from inertial to body in the body frame
+% Euler Angle Derivatives with Respect to the Navigation Frame (Groves Eq. 2.58)
+euler_rates = C_omega*omega_nb_b ;
+
+% Clock Derivatives (Simple Math)
+clkRates = [clkDrift;0];
 
 F = [vdot;omega_dot;rdot;euler_rates];
 
-J = jacobian(F,[u v w p q r lat long alt phi theta ps]);
+J = simplify(jacobian(F,[u v w p q r lat long alt phi theta ps clkBias clkDrift]));
 G = jacobian(F,[fb1 fb2 fb3 mb1 mb2 mb3]);
 
 

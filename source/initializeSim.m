@@ -54,11 +54,8 @@ clkNoise = sqrt(clkVar)*randn(2,1);
 clkBias = clkNoise(1);
 clkDrift = clkNoise(2);
 
-B = zeros(12,6);
-B(1:6,1:6) = eye(6);
-c = 299792458;
-
-initP = blkdiag(diag([0.00001 0 0]),diag(zeros(1,3)),diag([0 0 0]),diag(zeros(1,3)),clkVar);
+initP = blkdiag(diag([0.1 0.1 0.1]),diag([pi/90 pi/90 pi/90]),diag([1 1 1]),diag([pi/45 pi/45 pi/45]),clkVar);
+Q = blkdiag(diag(str2num(cell2mat(aircraft.noiseVariance))),clkVar);
 
 printText(10)
 fprintf('\t\t\t')
@@ -91,6 +88,7 @@ for i = 1:general.monteCarloRuns
     model(i) = model(i).setVariable('variance',str2num(cell2mat(aircraft.noiseVariance)));
     model(i) = model(i).setVariable('clkVar',clkVar);
     model(i) = model(i).setVariable('initP',initP);
+    model(i) = model(i).setVariable('Q',Q);
 end
 
 end

@@ -32,24 +32,6 @@ run = sim(model);
 
 save(append(dir.output,sprintf('%s_results.mat',inputFile(1:end-5))),"run")
 
-% figure
-% plot(diffVx)
-% 
-% figure
-% plot(diffVy)
-% 
-% figure
-% plot(diffVz)
-% 
-% figure
-% plot(diffomegax)
-% 
-% figure
-% plot(diffomegay)
-% 
-% figure
-% plot(diffomegaz)
-
 
 
 
