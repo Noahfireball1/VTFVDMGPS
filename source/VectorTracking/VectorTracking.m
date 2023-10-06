@@ -23,6 +23,11 @@ trueLat = refStates_n(7);
 trueLong = refStates_n(8);
 trueAlt = refStates_n(9);
 
+% Matrix Rotating from Navigation to ECEF Frame (Groves Eq. 2.150)
+trueC_n_e = [-cos(trueLong)*sin(trueLat) -sin(trueLong)*sin(trueLat) cos(trueLat);...
+    -sin(trueLong)                     cos(trueLong)           0      ;...
+    -cos(trueLong)*cos(trueLat)  -cos(trueLat)*sin(trueLong) -sin(trueLat)]';
+
 % Tranverse Radius of Curvature (Groves Eq. 2.106)
 trueR_E = (R_0)/(sqrt(1 - (e^2)*sin(trueLat)^2));
 
@@ -35,6 +40,11 @@ estStates_n = equationsOfMotion(predictedStates,forces,moments,Time_Step);
 estiLat = estStates_n(7);
 estiLong = estStates_n(8);
 estiAlt = estStates_n(9);
+
+% Matrix Rotating from Navigation to ECEF Frame (Groves Eq. 2.150)
+estiC_n_e = [-cos(estiLong)*sin(estiLat) -sin(estiLong)*sin(estiLat) cos(estiLat);...
+    -sin(estiLong)                     cos(estiLong)           0      ;...
+    -cos(estiLong)*cos(estiLat)  -cos(estiLat)*sin(estiLong) -sin(estiLat)]';
 
 % Tranverse Radius of Curvature (Groves Eq. 2.106)
 estiR_E = (R_0)/(sqrt(1 - (e^2)*sin(estiLat)^2));
