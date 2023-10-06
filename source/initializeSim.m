@@ -54,8 +54,10 @@ clkNoise = sqrt(clkVar)*randn(2,1);
 clkBias = clkNoise(1);
 clkDrift = clkNoise(2);
 
-initP = blkdiag(diag([0.1 0.1 0.1]),diag([pi/90 pi/90 pi/90]),diag([1 1 1]),diag([pi/45 pi/45 pi/45]),clkVar);
-Q = blkdiag(diag(str2num(cell2mat(aircraft.noiseVariance))),clkVar);
+initP = blkdiag(diag([0.1 0.1 0.1]),diag([pi/180 pi/180 pi/180]),diag([1e-6 1e-6 10]),diag([pi/360 pi/360 pi/360]),clkVar);
+Q = blkdiag(1e10*diag([0.1 0.1 0.1 0.1 0.1 0.1 1e-6 1e-6 0.1 0.1 0.1 0.1]),clkVar);
+% initP = zeros(14);
+% Q = zeros(14);
 
 printText(10)
 fprintf('\t\t\t')

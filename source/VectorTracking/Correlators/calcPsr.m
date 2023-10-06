@@ -18,7 +18,13 @@ unitVectors = [dx./range; dy./range; dz./range];
 
 for i = 1:length(psr)
 
-    psrDot(i) =  unitVectors(:,i)'*(usrVel - svVel(:,i)) + clkDrift;
+    ux = unitVectors(1,i);
+    uy = unitVectors(2,i);
+    uz = unitVectors(3,i);
+
+    psrDot(i) =  ux*(usrVel(1) - svVel(1,i)) + ...
+        uy*(usrVel(2) - svVel(2,i)) + ...
+        uz*(usrVel(3) - svVel(3,i)) + clkDrift;
 
 end
 

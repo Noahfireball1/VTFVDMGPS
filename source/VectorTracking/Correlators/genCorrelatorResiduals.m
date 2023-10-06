@@ -21,10 +21,10 @@ noiseEstimate = sqrt(1./(2*pdiTime*initCN0(activeSVIdx)));
 
 % Calculate Correlators
 for i = 1:length(noiseEstimate)
-    midIP(i) = calcCodeError(pdiTime/2,'I',codePhaseError(i),carrFreqError(i),0,phase2(i),noiseEstimate(i),midAmplitude(i),sqrt(2));
-    midQP(i) = calcCodeError(pdiTime/2,'Q',codePhaseError(i),carrFreqError(i),0,phase2(i),noiseEstimate(i),midAmplitude(i),sqrt(2));
-    IP(i) = calcCodeError(pdiTime/2,'I',codePhaseError(i),carrFreqError(i),0,phase1(i),noiseEstimate(i),midAmplitude(i),sqrt(2));
-    QP(i) = calcCodeError(pdiTime/2,'Q',codePhaseError(i),carrFreqError(i),0,phase1(i),noiseEstimate(i),midAmplitude(i),sqrt(2));
+    midIP(i) = calcCodeError(pdiTime/2,'I',codePhaseError(i),carrFreqError(i),0,phase1(i),noiseEstimate(i),midAmplitude(i),sqrt(2));
+    midQP(i) = calcCodeError(pdiTime/2,'Q',codePhaseError(i),carrFreqError(i),0,phase1(i),noiseEstimate(i),midAmplitude(i),sqrt(2));
+    IP(i) = calcCodeError(pdiTime/2,'I',codePhaseError(i),carrFreqError(i),0,phase2(i),noiseEstimate(i),midAmplitude(i),sqrt(2));
+    QP(i) = calcCodeError(pdiTime/2,'Q',codePhaseError(i),carrFreqError(i),0,phase2(i),noiseEstimate(i),midAmplitude(i),sqrt(2));
     IE(i) = calcCodeError(pdiTime,'I',codePhaseError(i),carrFreqError(i),-chipOffset,phase(i),noiseEstimate(i),amplitude(i),1);
     QE(i) = calcCodeError(pdiTime,'Q',codePhaseError(i),carrFreqError(i),-chipOffset,phase(i),noiseEstimate(i),amplitude(i),1);
     IL(i) = calcCodeError(pdiTime,'I',codePhaseError(i),carrFreqError(i),chipOffset,phase(i),noiseEstimate(i),amplitude(i),1);
@@ -32,11 +32,11 @@ for i = 1:length(noiseEstimate)
 end
 
 % Generate Discriminators
-discFLL = calcFLLError(midIP,IP,midQP,QP);
-discDLL = calcDLLError(IE,IL,QE,QL);
+discFLL = (midIP.*QP - midQP.*IP)/(pi*pdiTime);
+discDLL = ((IE.^2 + QE.^2) - (IL.^2 + QL.^2))/2;
 
 % Estimate Amplitude
-power = ((IE + IL).^2 + (QE + QL).^2);
+power = (IE + IL).^2 + (QE + QL).^2;
 
 % Moving Average Amplitude and Noise Calculation
 for i = 1:length(amplitude)
@@ -44,6 +44,7 @@ for i = 1:length(amplitude)
 end
 
 newAmplitude = 0.99*oldAmplitude(activeSVIdx)' + 0.01*power;
+% newAmplitude = oldAmplitude(activeSVIdx)';
 newNoise = 0.99*oldNoise(activeSVIdx)' + 0.01*gpsNoise;
 
 newCN0 = ((newAmplitude - 4*newNoise)./(2*pdiTime*newNoise));
