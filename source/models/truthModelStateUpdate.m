@@ -34,25 +34,25 @@ C_b_n = C_n_b';
 
 % Pre-processing Calculations
 omega_skew = [0 -r q; r 0 -p; -q p 0];
-R_N = (a*(1-e^2))/(1-e^2*sin(long)^2)^(3/2);
-R_E = (a)/(1 - e^2*sin(long)^2)^(1/2);
+R_N = (a*(1-e^2))/(1-e^2*sin(lat)^2)^(3/2);
+R_E = (a)/(1 - e^2*sin(lat)^2)^(1/2);
 
-omega_ie_n = [omega_ie*cos(long);0;-omega_ie*sin(long)]; % [checked]
-omega_ie_n_skew = [0 -omega_ie_n(3) omega_ie_n(2); omega_ie_n(3) 0 -omega_ie_n(1); -omega_ie_n(2) omega_ie_n(1) 0];
+omega_ie_n_skew = [0 sin(lat) 0;-sin(lat) 0 -cos(lat); 0 cos(lat) 0]*omega_ie;
+omega_ie_n = [omega_ie*cos(lat);0;-omega_ie*sin(lat)];
 
 % Linear Velocities
-D = diag([1/(R_N + alt);1/((R_E + alt)*cos(long));-1]);
-rdot = D*([u;v;w] + sqrt(variance(7:9)).*randn(3,1)*Time_Step); % [lat;long;alt] (radians,meters) Position derivative from earth to body in the nav frame
+D = diag([1/(R_N + alt);1/((R_E + alt)*cos(lat));-1]);
+rdot = D*([u;v;w] + sqrt(variance(7:9)).*randn(3,1)); % [lat;long;alt] (radians,meters) Position derivative from earth to body in the nav frame
 
-omega_en_n = [rdot(1)*cos(long);-rdot(2);rdot(1)*sin(long)]; % [checked]
+omega_en_n = [v/(R_E + alt); -u/(R_N + alt); -v*tan(lat)/(R_E + alt)]; % [checked]
 omega_en_n_skew = [0 -omega_en_n(3) omega_en_n(2); omega_en_n(3) 0 -omega_en_n(1); -omega_en_n(2) omega_en_n(1) 0];
 
 omega_nb_b = [p;q;r] - C_n_b*(omega_ie_n + omega_en_n);
 % Linear Accelerations
-vdot = C_b_n*(forces/m) - (2*omega_ie_n_skew + omega_en_n_skew)*[u;v;w] + sqrt(variance(1:3)).*randn(3,1)*Time_Step; % [Nv;Ev;Dv] (meters) Velocity derivative from earth to body in the nav frame
+vdot = (C_b_n*(forces/m) - (2*omega_ie_n_skew + omega_en_n_skew)*[u;v;w]) + (sqrt(variance(1:3)).*randn(3,1)); % [Nv;Ev;Dv] (meters) Velocity derivative from earth to body in the nav frame
 
 % Angular Accelerations
-omega_dot = Ic_B^-1*(moments - omega_skew*(Ic_B*[p;q;r])) + sqrt(variance(4:6)).*randn(3,1)*Time_Step; % [omega_x_dot, omega_y_dot, omega_z_dot] from inertial to body in the body frame
+omega_dot = Ic_B^-1*(moments - omega_skew*(Ic_B*[p;q;r])) + sqrt(variance(4:6)).*randn(3,1); % [omega_x_dot, omega_y_dot, omega_z_dot] from inertial to body in the body frame
 
 % Euler Rates
 euler_rates = C_omega*omega_nb_b ; % [phi_dot;theta_dot;psi_dot] (radians) euler rates from body to nav
@@ -63,8 +63,8 @@ euler_rates = C_omega*omega_nb_b ; % [phi_dot;theta_dot;psi_dot] (radians) euler
 xDot = [vdot;omega_dot;rdot;euler_rates;0;0];
 states = xDot*Time_Step + oldStates;
 
-% clkNoise = sqrt(clkVar)*randn(2,1);
-% states(13) = oldStates(13) + oldStates(14)*Time_Step + clkNoise(1);
-% states(14) = oldStates(14) + clkNoise(2);
+clkNoise = sqrt(clkVar)*randn(2,1);
+states(13) = oldStates(13) + oldStates(14)*Time_Step + clkNoise(1);
+states(14) = oldStates(14) + clkNoise(2);
 
 end

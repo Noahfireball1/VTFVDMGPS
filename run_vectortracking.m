@@ -32,9 +32,8 @@ day = 22;
 date = datetime(year,month,day);
 duration = 30;
 frequency = 200;
-noisePSD = [0.020787;0.020787;0.020787;0.0092714;0.018798;0.0066499].*200;
 clockType = 'OCXO';
-initialState = [75;0;0;0;0;0;0.65617;-2.1376;1000;0;4*pi/180;0;0;0];
+initialState = [32.609856 0 -85.480782 0 200 0 0 0];
 CN0 = 45;
 
 % Pull Rinex for given date and time
@@ -44,12 +43,12 @@ rinexFilePath = string(rinex.rinexFilePath);
 %% Begin Vector Tracking
 xMinus(:,1) = initialState;
 clkVar = formClkVariance(clockType,1/frequency);
-Q = blkdiag(diag([noisePSD;zeros(6,1)]),clkVar);
-pMinus(:,:,1) = initPMinus(initialState,clkVar);
+Q = blkdiag(diag([1.5 0 1.5 0 3.0 0]),clkVar);
+pMinus(:,:,1) = Q;
 timeArray = 0:1/frequency:duration;
 
 signal.initCN0 = ones(1,31).*10^(CN0/10);
-signal.phase = 0.*ones(1,31);
+signal.phase = unifrnd(0,1,1,31);
 signal.noise = (1./(2*(1/50)*signal.initCN0));
 signal.amplitude = 4*signal.noise;
 signal.CN0 = signal.initCN0;
@@ -57,7 +56,7 @@ signal.CN0 = signal.initCN0;
 for timeIdx = 2:length(timeArray)
 
     % Time Update
-    [F,G] = formFG(xMinus(:,timeIdx-1),f_ib_b(timeIdx,:),m_ib_b(timeIdx,:),1/frequency);
+    [F,G] = formFG(xMinus(:,timeIdx-1),1/frequency);
     pMinus(:,:,timeIdx) = F*pMinus(:,:,timeIdx-1)*F' + F*Q*F'*(1/frequency);
     xMinus(:,timeIdx) = predictStates(xMinus(:,timeIdx-1),f_ib_b(timeIdx,:)',m_ib_b(timeIdx,:)',1/frequency,clkVar);
 

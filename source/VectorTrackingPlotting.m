@@ -162,7 +162,7 @@ classdef VectorTrackingPlotting < handle
             title('Euler Angles')
             ylabel('Roll [deg]')
             plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,10)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
-            plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,10)*R2D,'LineWidth',obj.lw,'Color',obj.secondaryColor)
+            plot(obj.timeUpdateTime,wrapTo180(obj.outputs.estimatedStates(:,10)*R2D),'LineWidth',obj.lw,'Color',obj.secondaryColor)
             ax = gca;
             ax.FontSize = obj.fs;
 
@@ -170,7 +170,7 @@ classdef VectorTrackingPlotting < handle
             hold on
             ylabel('Pitch [deg]')
             plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,11)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
-            plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,11)*R2D,'LineWidth',obj.lw,'Color',obj.secondaryColor)
+            plot(obj.timeUpdateTime,wrapTo180(obj.outputs.estimatedStates(:,11)*R2D),'LineWidth',obj.lw,'Color',obj.secondaryColor)
             legend('Truth','Estimated','Location','eastoutside')
             ax = gca;
             ax.FontSize = obj.fs;
@@ -180,7 +180,7 @@ classdef VectorTrackingPlotting < handle
             ylabel('Yaw [deg]')
             xlabel('Time [s]')
             plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,12)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
-            plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,12)*R2D,'LineWidth',obj.lw,'Color',obj.secondaryColor)
+            plot(obj.timeUpdateTime,wrapTo180(obj.outputs.estimatedStates(:,12)*R2D),'LineWidth',obj.lw,'Color',obj.secondaryColor)
             ax = gca;
             ax.FontSize = obj.fs;
 

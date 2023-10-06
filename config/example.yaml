@@ -4,13 +4,13 @@ general:
   month: 12
   day: 22
   outputDir: # If user wants to output result files to an external drive, otherwise save to current output directory
-  duration: 30
+  duration: 60
   monteCarloRuns: 1
 aircraft:
-  frequency: 50 # [Hz]
+  frequency: 200 # [Hz]
   waypoints: SCurveFlightPath
   lookaheadDistance: 50 # [m]
-  noiseVariance: [0;0;0;0.00001;0.00001;0.00001;0;0;0]
+  noiseVariance: [0.001;0;0;0;0;0;0;0;0]
   clockType: OCXO # [LOW-TCXO;HIGH-TXCO;OCXO;RUBIDIUM;CESIUM]
   initialState:
     u: 75 # [m/s]

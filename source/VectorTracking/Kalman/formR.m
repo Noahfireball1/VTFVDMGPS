@@ -1,4 +1,4 @@
-function R = formR(varPsr,varCarr,varAng)
+function R = formR(varPsr,varCarr)
 count = 1;
 Rtmp = [];
 
@@ -9,6 +9,6 @@ for i = 1:2:2*length(varPsr)
     count = count + 1;
 end
 
-R = diag([Rtmp varAng varAng(1) varAng(4) varAng(4) varAng(4)]);
+R = diag(Rtmp);
 end
 

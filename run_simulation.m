@@ -3,7 +3,7 @@ clc
 clear
 close all
 format shortg
-
+rng(1)
 %% Adding Directories Based on User's Paths
 projectRoot = fileparts(which(mfilename)); 
 addpath(genpath(projectRoot))
@@ -29,13 +29,6 @@ inputFilePath = append(dir.config,inputFile);
 printText(7);
 
 run = sim(model);
-
-diffVx = diff(run.truthStates(:,1));
-diffVy = diff(run.truthStates(:,2));
-diffVz = diff(run.truthStates(:,3));
-diffomegax = diff(run.truthStates(:,4));
-diffomegay = diff(run.truthStates(:,5));
-diffomegaz = diff(run.truthStates(:,6));
 
 save(append(dir.output,sprintf('%s_results.mat',inputFile(1:end-5))),"run")
 

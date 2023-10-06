@@ -10,7 +10,7 @@ switch upper(correlatorType)
     otherwise
         bitError = 0;
 end
-if abs(codeError + chipOffset) > 1.5
+if abs(codeError + chipOffset) > 5
     bitError = 0;
 end
 

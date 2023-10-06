@@ -34,16 +34,17 @@ C_b_n = C_n_b';
 
 % Pre-processing Calculations
 omega_skew = [0 -r q; r 0 -p; -q p 0];
-R_N = (a*(1-e^2))/(1-e^2*sin(long)^2)^(3/2);
-R_E = (a)/(1 - e^2*sin(long)^2)^(1/2);
+R_N = (a*(1-e^2))/(1-e^2*sin(lat)^2)^(3/2);
+R_E = (a)/(1 - e^2*sin(lat)^2)^(1/2);
 
-omega_ie_n = [omega_ie*cos(long);0;-omega_ie*sin(long)]; % [checked]
-omega_ie_n_skew = [0 -omega_ie_n(3) omega_ie_n(2); omega_ie_n(3) 0 -omega_ie_n(1); -omega_ie_n(2) omega_ie_n(1) 0];
+omega_ie_n_skew = [0 sin(lat) 0;-sin(lat) 0 -cos(lat); 0 cos(lat) 0]*omega_ie;
+omega_ie_n = [omega_ie*cos(lat);0;-omega_ie*sin(lat)];
 
 % Linear Velocities
-rdot = [u/(R_N + alt);v/((R_E + alt)*cos(long));-w]; % [lat;long;alt] (radians,meters) Position derivative from earth to body in the nav frame
+D = diag([1/(R_N + alt);1/((R_E + alt)*cos(lat));-1]);
+rdot = D*([u;v;w]); % [lat;long;alt] (radians,meters) Position derivative from earth to body in the nav frame
 
-omega_en_n = [rdot(1)*cos(long);-rdot(2);rdot(1)*sin(long)]; % [checked]
+omega_en_n = [v/(R_E + alt); -u/(R_N + alt); -v*tan(lat)/(R_E + alt)]; % [checked]
 omega_en_n_skew = [0 -omega_en_n(3) omega_en_n(2); omega_en_n(3) 0 -omega_en_n(1); -omega_en_n(2) omega_en_n(1) 0];
 
 omega_nb_b = [p;q;r] - C_n_b*(omega_ie_n + omega_en_n);
@@ -56,8 +57,9 @@ omega_dot = Ic_B^-1*(moments - omega_skew*(Ic_B*[p;q;r])); % [omega_x_dot, omega
 % Euler Rates
 euler_rates = C_omega*omega_nb_b ; % [phi_dot;theta_dot;psi_dot] (radians) euler rates from body to nav
 
+
 % Clock Terms
-clkRates = [0;0];
+clkRates = [oldStates(14);0];
 
 
 % Integrate
