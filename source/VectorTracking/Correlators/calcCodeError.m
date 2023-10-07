@@ -1,4 +1,4 @@
-function correlator = calcCodeError(pdiTime,correlatorType,codeError,freqError,chipOffset,phase,noiseEstimate,amplitude,scale)
+function bitError = calcCodeError(pdiTime,correlatorType,codeError,freqError,chipOffset,phase)
 
 switch upper(correlatorType)
     case 'I'
@@ -10,9 +10,5 @@ switch upper(correlatorType)
     otherwise
         bitError = 0;
 end
-if abs(codeError + chipOffset) > 1
-    bitError = 0;
-end
 
-correlator = calcCorrelators(bitError,noiseEstimate,scale,amplitude);
 end
