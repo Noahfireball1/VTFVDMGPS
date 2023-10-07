@@ -7,13 +7,13 @@ pdiTime = 1/50;
 
 % Calculate Carrier Phase Errors
 phase1 = oldPhase(activeSVIdx);
-phase2 = oldPhase(activeSVIdx) + carrFreqError*(pdiTime/2);
+phase2 = oldPhase(activeSVIdx) + carrFreqError'*(pdiTime/2);
 phase = (phase1 + phase2)/2;
 newPhase = phase2;
 
 % Estimate Amplitude
-amplitude = sinc(pi*carrFreqError*pdiTime);
-midAmplitude = sinc(pi*carrFreqError*pdiTime/2);
+amplitude = sinc(pi*carrFreqError'*pdiTime);
+midAmplitude = sinc(pi*carrFreqError'*pdiTime/2);
 
 % Calculate Noise Estimate
 noiseEstimate = sqrt(1./(2*pdiTime*initCN0(activeSVIdx)));
@@ -24,10 +24,10 @@ for i = 1:length(noiseEstimate)
     midQP_codeError(i) = calcCodeError(pdiTime/2,'Q',codePhaseError(i),carrFreqError(i),0,phase1(i));
     IP_codeError(i) = calcCodeError(pdiTime/2,'I',codePhaseError(i),carrFreqError(i),0,phase2(i));
     QP_codeError(i) = calcCodeError(pdiTime/2,'Q',codePhaseError(i),carrFreqError(i),0,phase2(i));
-    IE_codeError(i) = calcCodeError(pdiTime,'I',codePhaseError(i),carrFreqError(i),-chipOffset,phase(i));
-    QE_codeError(i) = calcCodeError(pdiTime,'Q',codePhaseError(i),carrFreqError(i),-chipOffset,phase(i));
-    IL_codeError(i) = calcCodeError(pdiTime,'I',codePhaseError(i),carrFreqError(i),chipOffset,phase(i));
-    QL_codeError(i) = calcCodeError(pdiTime,'Q',codePhaseError(i),carrFreqError(i),chipOffset,phase(i));
+    IE_codeError(i) = calcCodeError(pdiTime,'I',codePhaseError(i),carrFreqError(i),chipOffset,phase(i));
+    QE_codeError(i) = calcCodeError(pdiTime,'Q',codePhaseError(i),carrFreqError(i),chipOffset,phase(i));
+    IL_codeError(i) = calcCodeError(pdiTime,'I',codePhaseError(i),carrFreqError(i),-chipOffset,phase(i));
+    QL_codeError(i) = calcCodeError(pdiTime,'Q',codePhaseError(i),carrFreqError(i),-chipOffset,phase(i));
 end
 
 % If Code Error is too big, set to zero
@@ -53,7 +53,7 @@ QP = (midAmplitude.*QP_codeError + sqrt(2).*noiseEstimate.*randn(1,length(amplit
 
 % Generate Discriminators
 discFLL = (midIP.*QP - midQP.*IP)/(pi*pdiTime);
-discDLL = ((IE.^2 + QE.^2) - (IL.^2 + QL.^2))/2;
+discDLL = (IE.^2 + QE.^2 - IL.^2 - QL.^2)/2;
 
 % Estimate Amplitude
 power = (IE + IL).^2 + (QE + QL).^2;

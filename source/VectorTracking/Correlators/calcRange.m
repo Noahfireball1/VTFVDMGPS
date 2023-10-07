@@ -1,24 +1,29 @@
-function [range,rangeRate] = calcRange(usrStates,svStates)
+function [range,rangeRate,unitVectors,activeSVs] = calcRange(usrPos,usrVel,svPos,svVel)
+rangeRate = zeros(31,1);
 
-usrVel = [usrStates(2);usrStates(4);usrStates(6)];
-svVel = [svStates(2,:);svStates(4,:);svStates(6,:)];
+range = sqrt((svPos(:,1) - usrPos(1)).^2 ...
+    + (svPos(:,2) - usrPos(2)).^2 ...
+    + (svPos(:,3) - usrPos(3)).^2);
 
-range = sqrt((svStates(1,:) - usrStates(1)).^2 ...
-    + (svStates(3,:) - usrStates(3)).^2 ...
-    + (svStates(1,:) - usrStates(5)).^2);
 
-unitVectors = [(svStates(1,:) - usrStates(1))./range;...
-    (svStates(3,:) - usrStates(3))./range;...
-    (svStates(5,:) - usrStates(5))./range];
+unitVectors = [(svPos(:,1) - usrPos(1))./range,...
+    (svPos(:,2) - usrPos(2))./range,...
+    (svPos(:,3) - usrPos(3))./range];
 
-for i = 1:length(range)
+for i = 1:31
 
-    ux = unitVectors(1,i);
-    uy = unitVectors(2,i);
-    uz = unitVectors(3,i);
+    ux = unitVectors(i,1);
+    uy = unitVectors(i,2);
+    uz = unitVectors(i,3);
 
-    rangeRate(i) =  -ux*(svVel(1,i) - usrVel(1)) + ...
-        -uy*(svVel(2,i) - usrVel(2)) + ...
-        -uz*(svVel(3,i) - usrVel(3));
+    rangeRate(i) =  ux*(usrVel(1) - svVel(i,1)) + ...
+        uy*(usrVel(2) - svVel(i,2)) + ...
+        uz*(usrVel(3) - svVel(i,3));
 
 end
+
+% Discard any satellites with a negative elevation
+LLA = ecef2lla(usrPos,'WGS84');
+[~,el,~] = lookangles(LLA,svPos);
+
+activeSVs = el > 10;
