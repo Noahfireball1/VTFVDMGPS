@@ -35,4 +35,3 @@ LLA = ecef2lla(usrStates(1:3),'WGS84');
 activeSVs = el > 10;
 
 end
-

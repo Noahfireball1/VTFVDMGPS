@@ -4,22 +4,41 @@ clear
 close all
 format shortg
 
+rinexFilePath = "C:\Users\nsm0014\graduate\thesis\VTFVDMGPS\source\VectorTracking\Satellites\rinex\AMC400USA_R_20223560000_01D_GN.rnx";
 %% Static Vector Tracking Analysis
 AuburnLLA = [32.6099,85.4808,200];
 AuburnECEF = lla2ecef(AuburnLLA,'WGS84');
 x_m(:,1) = [AuburnECEF(1);0;AuburnECEF(2);0;AuburnECEF(3);0;0;0];
 timeStep = 1/50;
+time = 0:timeStep:100;
 k = [0 1;0 0];
 A = blkdiag(k,k,k,k);
 Phi = expm(A*timeStep);
 
+c = 299792458;
+h_0 = 2e-25;
+h_2 = 6e-25;
+sigmaX = 1;
+sigmaY = 1;
+sigmaZ = 1;
+S_f = c^2*h_0/2;
+S_g = c^2*2*pi^2*h_2;
+Q1 = [timeStep^3/3 timeStep^2/2; timeStep^2/2 timeStep]*sigmaX;
+Q2 = [timeStep^3/3 timeStep^2/2; timeStep^2/2 timeStep]*sigmaY; 
+Q3 = [timeStep^3/3 timeStep^2/2; timeStep^2/2 timeStep]*sigmaZ; 
+Q4 = [S_f*timeStep + S_g*timeStep^3/3 S_g*timeStep^2/2;S_g*timeStep^2/2 S_g*timeStep]; 
+Qd = blkdiag(Q1,Q2,Q3,Q4);
 
+p_m(:,:,1) = eye(8);
+
+truthStates(:,1) = x_m(:,1);
 
 
 for i = 2:100
 
-    satStates = 1;
-    j = length(satStates(1,:));
+    satStates = genSatellitesStates(time(i),2022,12,22,rinexFilePath);
+    %% Truth State Propagation
+    truthStates(:,i) = Phi*truthStates(:,i-1) + sqrt(Qd)*randn(8,1);
 
     %% Time Update
     x_m(:,i) = Phi*x_m(:,i-1);
