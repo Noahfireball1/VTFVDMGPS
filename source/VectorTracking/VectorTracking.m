@@ -12,12 +12,13 @@ newNoise = oldNoise';
 newPhase = oldPhase';
 svStates = zeros(7,31);
 
+c = 299792458;
 e = 0.0818191910428; % eccentricity
 R_0 = 6378137.0; % equatorial radius [meters]
 
 %% Propagate Receiver States
-truthStates_n = equationsOfMotionWithNoise(receiverStates,trueF_ib_b,trueM_ib_b,Time_Step,variance,clkVar);
-
+truthStates_n = equationsOfMotion(receiverStates,trueF_ib_b,trueM_ib_b,Time_Step);
+truthStates_n = truthStates_n + sqrt(Q)*randn(14,1)*Time_Step;
 % For Conversion to ECEF Frame
 trueLat = truthStates_n(7);
 trueLong = truthStates_n(8);
@@ -86,37 +87,44 @@ if mod(time,1/50) == 0 && update
         estStates_e(7:8) = estStates_n(13:14);
 
         %% Pull Current Satellite States
-        svStates = genSatellitesStates(time,year,month,day,rinexFilePath);
+        satStates = genSatellitesStates(time,year,month,day,rinexFilePath);
+        svPos = [satStates(1,:)' satStates(3,:)' satStates(5,:)'];
+        svVel = [satStates(2,:)' satStates(4,:)' satStates(6,:)'];
 
-        % Calculate Reciever PSR, Carrier Frequency, Unit Vectors
-        [truthRange,truthRangeRate] = calcRange(truthStates_e,svStates);
+        % Calculating Range from SV to User based on TRUTH states
+        truthPos = [truthStates_e(1) truthStates_e(2) truthStates_e(3)];
+        truthVel = [truthStates_e(4) truthStates_e(5) truthStates_e(6)];
+        [truthRange,truthRangeRate,~,~] = calcRange(truthPos,truthVel,svPos,svVel);
 
-        % Calculate Predicted PSR, Carrier Frequency
-        [psr,carr,unitVectors,activeSVs] = calcPsr(estStates_e,svStates);
-        estPsr = psr(activeSVs);
-        estCarr = carr(activeSVs);
+        % Calculating Estimated Pseudorange from SV to User based on ESTIMATED states
+        estiPos = [estStates_e(1) estStates_e(2) estStates_e(3)];
+        estiVel = [estStates_e(4) estStates_e(5) estStates_e(6)];
+        [range,rangeRate,unitVectors,activeSVs] = calcRange(estiPos,estiVel,svPos,svVel);
+        psr = range + estStates_e(7) - c*satStates(7,:)';
+        psrDot = rangeRate - estStates_e(8);
 
         % Generate Correlator Residuals
-        [resPsr,resCarr,varPsr,varCarr,CN0,Amplitude,Noise,Phase] = genCorrelatorResiduals(truthRange(activeSVs),estPsr,truthRangeRate(activeSVs),estCarr,oldCN0,oldAmplitude,oldNoise,activeSVs,oldPhase,initCN0);
+        [resPsr,resCarr,varPsr,varCarr,CN0,Amplitude,Noise,Phase] = genCorrelatorResiduals(truthRange(activeSVs),psr(activeSVs),truthRangeRate(activeSVs),psrDot(activeSVs),...
+            oldCN0,oldAmplitude,oldNoise,activeSVs,oldPhase,initCN0);
 
         % Form Z Array
         Z = formZ(resPsr,resCarr);
 
         % Form H Matrix
-        H = formH(unitVectors(:,activeSVs),estStates_n(7:9));
+        H = formH(unitVectors(activeSVs,:),estStates_n(7:9));
 
         % Form R Matrix
         R = formR(varPsr,varCarr);
 
-        % Update Kalman Gain
-        L = calcL(H,predictedCovariance,R);
+        % Form L
+        L = predictedCovariance*H'*(H*predictedCovariance*H' + R)^-1;
 
         % Update Estimated States
-        estimatedStates = estStates_n - L*Z;
+        estimatedStates = estStates_n + L*Z;
         % estimatedStates = estStates_n;
 
         % Update Estimated Covariance
-        estimatedCovariance = updateCovariance(predictedCovariance,L,H,R);
+        estimatedCovariance = (eye(size(predictedCovariance)) - L*H)*predictedCovariance;
 
         % Convert residuals to determinstic size
         activeIdx = find(activeSVs);

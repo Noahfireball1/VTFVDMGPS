@@ -4,14 +4,14 @@ general:
   month: 12
   day: 22
   outputDir: # If user wants to output result files to an external drive, otherwise save to current output directory
-  duration: 7
+  duration: 60
   monteCarloRuns: 1
 aircraft:
-  frequency: 50 # [Hz]
+  frequency: 200 # [Hz]
   waypoints: SCurveFlightPath
   lookaheadDistance: 50 # [m]
   noiseVariance: [0;0;0;0;0;0;1e-14;1e-14;0;pi/1000;pi/1000;pi/1000]
-  clockType: iosnfons # [LOW-TCXO;HIGH-TXCO;OCXO;RUBIDIUM;CESIUM]
+  clockType: LOW-TCXO # [LOW-TCXO;HIGH-TXCO;OCXO;RUBIDIUM;CESIUM]
   initialState:
     u: 75 # [m/s]
     v: 0 # [m/s]
@@ -22,11 +22,11 @@ aircraft:
     lat: 0.65617 # [radians]
     long: -2.1376 # [radians]
     alt: 500 # [m]
-    phi: '5*pi/180' # [rad]
+    phi: '0*pi/180' # [rad]
     theta: 4*pi/180 # [rad]
     psi: '0' # [rad]
     clkBias: 0
     clkDrift: 0
 signal:
-  CN0: 50
+  CN0: 20
   amplitude: 1

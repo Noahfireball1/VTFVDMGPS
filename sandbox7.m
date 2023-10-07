@@ -33,10 +33,10 @@ p_m(:,:,1) = eye(8);
 
 truthStates(:,1) = x_m(:,1);
 
-initCN0 = 10^(50/10).*ones(1,31);
-oldAmplitude = ones(1,31);
+initCN0 = 10^(50/10).*ones(31,1);
+oldAmplitude = ones(31,1);
 oldNoise = 1./(2*0.02*(initCN0));
-oldPhase = unifrnd(0,1,1,31);
+oldPhase = unifrnd(0,1,31,1);
 oldCN0 = initCN0;
 
 

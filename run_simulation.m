@@ -27,8 +27,6 @@ inputFilePath = append(dir.config,inputFile);
 [model,dir] = initializeSim(inputFilePath,dir);
 %% Starting Simulation
 printText(7);
-figure
-hold on
 run = sim(model);
 
 save(append(dir.output,sprintf('%s_results.mat',inputFile(1:end-5))),"run")

@@ -7,7 +7,7 @@ pdiTime = 1/50;
 
 % Calculate Carrier Phase Errors
 phase1 = oldPhase(activeSVIdx);
-phase2 = oldPhase(activeSVIdx) + carrFreqError'*(pdiTime/2);
+phase2 = oldPhase(activeSVIdx) + carrFreqError*(pdiTime/2);
 phase = (phase1 + phase2)/2;
 newPhase = phase2;
 
@@ -63,14 +63,17 @@ for i = 1:length(amplitude)
     gpsNoise(i) = var(noiseEstimate(i)*randn(6,1));
 end
 
-newAmplitude = 0.99*oldAmplitude(activeSVIdx) + 0.01*power;
-newNoise = 0.99*oldNoise(activeSVIdx) + 0.01*gpsNoise;
+newAmplitude = 0.99*oldAmplitude(activeSVIdx) + 0.01*power';
+newNoise = 0.99*oldNoise(activeSVIdx) + 0.01*gpsNoise';
 
 newCN0 = ((newAmplitude - 4*newNoise)./(2*pdiTime*newNoise));
 
 % Generating pseudorange and pseudorange rate residuals
-resPsr = calcPsrRes(discDLL);
-resCarr = calcCarrRes(discFLL);
+chipWidth = 299792458/1.023e6;
+wavelength = 299792458/1575.42e6;
+
+resPsr = discDLL*chipWidth;
+resCarr = discFLL*-wavelength;
 
 % Calculating Variances for Measurement Update
 [varPsr,varCarr] = calcResVariances(newCN0);
