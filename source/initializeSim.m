@@ -55,11 +55,8 @@ clkBias = clkNoise(1);
 clkDrift = clkNoise(2);
 
 initP = eye(14);
-% initP(4:6,4:6) = 0;
-% initP(10:12,10:12) = 0;
-Q = blkdiag(diag([2500 2500 1000 1e-1 1e-1 1e-1 5e-10 5e-10 10000 0 0 0]),clkVar);
-% initP = zeros(14);
-% Q = zeros(14);
+
+Q = blkdiag(diag([2500 2500 1000 1e-1 1e-1 1e-1 1e-9 1e-9 10000 0 0 0]),clkVar);
 
 printText(10)
 fprintf('\t\t\t')

@@ -3,7 +3,6 @@ clc
 clear
 close all
 format shortg
-rng(1)
 %% Adding Directories Based on User's Paths
 projectRoot = fileparts(which(mfilename)); 
 addpath(genpath(projectRoot))

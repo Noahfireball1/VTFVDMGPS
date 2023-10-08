@@ -1,4 +1,4 @@
-function [estimatedStates,receiverStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase,svStates] = ...
+function [estimatedStates,receiverStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase,satStates] = ...
     VectorTracking(forces,moments,predictedStates,trueF_ib_b,trueM_ib_b,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,oldCN0,oldAmplitude,oldNoise,...
     oldPhase,initCN0,Time_Step,variance,clkVar,Q)
 
@@ -10,7 +10,7 @@ newCN0 = oldCN0';
 newAmplitude = oldAmplitude';
 newNoise = oldNoise';
 newPhase = oldPhase';
-svStates = zeros(7,31);
+satStates = zeros(7,31);
 
 c = 299792458;
 e = 0.0818191910428; % eccentricity
