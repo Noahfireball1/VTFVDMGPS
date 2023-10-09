@@ -1,6 +1,4 @@
 classdef VectorTrackingPlotting < handle
-    %VECTORTRACKINGPLOTTING Summary of this class goes here
-    %   Detailed explanation goes here
 
     properties
         outputs
@@ -27,8 +25,6 @@ classdef VectorTrackingPlotting < handle
             scale = dtMeas(1)/dtTime(1);
 
             obj.timeIdx = 1:scale:length(obj.timeUpdateTime);
-
-            obj.numMonteCarlos = 1;
 
             obj.plotMap();
 
@@ -155,6 +151,7 @@ classdef VectorTrackingPlotting < handle
             xlabel('Time [s]')
             plot(obj.timeUpdateTime,noiseNED(:,3),'LineWidth',obj.lw,'Color',obj.secondaryColor)
             plot(obj.timeUpdateTime ,truthNED(:,3),'LineWidth',obj.lw,'Color',obj.primaryColor)
+            xlim([0 180])
             ax = gca;
             ax.FontSize = obj.fs;
 

@@ -18,7 +18,7 @@ R_0 = 6378137.0; % equatorial radius [meters]
 
 %% Propagate Receiver States
 truthStates_n = equationsOfMotion(receiverStates,trueF_ib_b,trueM_ib_b,Time_Step);
-truthStates_n = truthStates_n + sqrt(Q)*randn(14,1)*Time_Step;
+truthStates_n = truthStates_n; %+ sqrt(Q)*randn(14,1)*Time_Step;
 % For Conversion to ECEF Frame
 trueLat = truthStates_n(7);
 trueLong = truthStates_n(8);
@@ -58,9 +58,9 @@ predictedCovariance = Phi*predictedCovariance*Phi' + Phi*blkdiag(Q(1:12,1:12)*Ti
 
 %% Measurement Update
 update = 1;
-if time > 60
-    initCN0 = 10^(22.5/10)*ones(1,31);
-end
+% if time > 60
+%     initCN0 = 10^(22.5/10)*ones(1,31);
+% end
 if mod(time,1/50) == 0 && update
     try
         %% Convert True States to ECEF Frame [Positions; Velocities; Clock Bias; Clock Drift]
