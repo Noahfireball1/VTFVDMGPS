@@ -58,6 +58,9 @@ predictedCovariance = Phi*predictedCovariance*Phi' + Phi*blkdiag(Q(1:12,1:12)*Ti
 
 %% Measurement Update
 update = 1;
+if time > 60
+    initCN0 = 10^(22.5/10)*ones(1,31);
+end
 if mod(time,1/50) == 0 && update
     try
         %% Convert True States to ECEF Frame [Positions; Velocities; Clock Bias; Clock Drift]

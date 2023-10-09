@@ -5,7 +5,7 @@ general:
   day: 22
   outputDir: # If user wants to output result files to an external drive, otherwise save to current output directory
   duration: 120 
-  monteCarloRuns: 1
+  monteCarloRuns: 100
 aircraft:
   frequency: 200 # [Hz]
   waypoints: SCurveFlightPath
