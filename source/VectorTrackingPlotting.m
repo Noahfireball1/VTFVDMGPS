@@ -438,9 +438,12 @@ classdef VectorTrackingPlotting < handle
                 title('Carrier to Noise Ratio')
                 ylabel('CN0 [db-Hz]')
                 xlabel('Time [s]')
+                first = 0:1/200:60;
+                second = 60+1/200:1/200:150;
+                third = 150+1/200:1/200:180;
 
                 s1 = plot(obj.timeUpdateTime(obj.timeIdx),CN0plot(obj.timeIdx,:),'LineWidth',obj.lw,'Color',obj.primaryColor);
-                s2 = plot(obj.timeUpdateTime,ones(1,length(obj.timeUpdateTime)).*45,'LineWidth',3,'Color',obj.secondaryColor,'LineStyle','--');
+                s2 = plot(obj.timeUpdateTime,[ones(1,length(first)).*45 ones(1,length(second)).*25 ones(1,length(third)).*45],'LineWidth',3,'Color',obj.secondaryColor,'LineStyle','--');
                 legend([s1(1),s2(1)],'Estimated CN0','Design CN0')
                 ax = gca;
                 ax.FontSize = obj.fs;
