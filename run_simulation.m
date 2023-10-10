@@ -26,7 +26,7 @@ inputFilePath = append(dir.config,inputFile);
 [model,dir] = initializeSim(inputFilePath,dir);
 %% Starting Simulation
 printText(7);
-run = parsim(model,'ShowProgress','on');
+run = sim(model,'ShowProgress','on');
 
 save(append(dir.output,sprintf('%s_results.mat',inputFile(1:end-5))),"run")
 

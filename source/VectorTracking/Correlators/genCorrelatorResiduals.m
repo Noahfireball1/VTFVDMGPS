@@ -41,14 +41,14 @@ IP_codeError(abs(codePhaseError) > 1) = 0;
 QP_codeError(abs(codePhaseError) > 1) = 0;
 
 % Generate Correlators
-IE = (amplitude.*IE_codeError + noiseEstimate.*randn(1,length(amplitude)));
-QE = (amplitude.*QE_codeError + noiseEstimate.*randn(1,length(amplitude)));
-IL = (amplitude.*IL_codeError + noiseEstimate.*randn(1,length(amplitude)));
-QL = (amplitude.*QL_codeError + noiseEstimate.*randn(1,length(amplitude)));
-midIP = (midAmplitude.*midIP_codeError + sqrt(2).*noiseEstimate.*randn(1,length(amplitude)));
-midQP = (midAmplitude.*midQP_codeError + sqrt(2).* noiseEstimate.*randn(1,length(amplitude)));
-IP = (midAmplitude.*IP_codeError + sqrt(2).*noiseEstimate.*randn(1,length(amplitude)));
-QP = (midAmplitude.*QP_codeError + sqrt(2).*noiseEstimate.*randn(1,length(amplitude)));
+IE = (amplitude.*IE_codeError + noiseEstimate'.*randn(1,length(amplitude)));
+QE = (amplitude.*QE_codeError + noiseEstimate'.*randn(1,length(amplitude)));
+IL = (amplitude.*IL_codeError + noiseEstimate'.*randn(1,length(amplitude)));
+QL = (amplitude.*QL_codeError + noiseEstimate'.*randn(1,length(amplitude)));
+midIP = (midAmplitude.*midIP_codeError + sqrt(2).*noiseEstimate'.*randn(1,length(amplitude)));
+midQP = (midAmplitude.*midQP_codeError + sqrt(2).* noiseEstimate'.*randn(1,length(amplitude)));
+IP = (midAmplitude.*IP_codeError + sqrt(2).*noiseEstimate'.*randn(1,length(amplitude)));
+QP = (midAmplitude.*QP_codeError + sqrt(2).*noiseEstimate'.*randn(1,length(amplitude)));
 
 
 % Generate Discriminators
