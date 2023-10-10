@@ -18,7 +18,7 @@ R_0 = 6378137.0; % equatorial radius [meters]
 
 %% Propagate Receiver States
 truthStates_n = equationsOfMotion(receiverStates,trueF_ib_b,trueM_ib_b,Time_Step);
-truthStates_n = truthStates_n; %+ sqrt(Q)*randn(14,1)*Time_Step;
+truthStates_n = truthStates_n + sqrt(Q)*randn(14,1)*Time_Step;
 % For Conversion to ECEF Frame
 trueLat = truthStates_n(7);
 trueLong = truthStates_n(8);
