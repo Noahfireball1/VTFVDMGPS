@@ -17,64 +17,114 @@ classdef MonteCarloPlotting < handle
 
             loadedFile = load(outputFilePath);
             numMCRuns = size(loadedFile.run,2);
-
             % Determining RMS value for each state
-            for timeIdx = 1:length(loadedFile.run(1,1).tout)
+
+            count = 1;
+            for timeIdx = 1:20:length(loadedFile.run(1,1).tout)
                 for mcIdx = 1:numMCRuns
                     try
-                        u(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,1);
-                        v(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,2);
-                        w(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,3);
-                        speed(mcIdx) = norm([u(mcIdx) v(mcIdx) w(mcIdx)]);
-                        p(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,4);
-                        q(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,5);
-                        r(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,6);
-                        lat(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,7);
-                        long(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,8);
-                        alt(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,9);
-                        phi(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,10);
-                        theta(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,11);
-                        psi(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,12);
-                        clkBias(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,13);
-                        clkDrift(mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,14);
+                        u(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,1);
+                        v(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,2);
+                        w(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,3);
+                        speed(count) = norm([u(count) v(count) w(count)]);
+                        p(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,4);
+                        q(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,5);
+                        r(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,6);
+                        lat(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,7);
+                        long(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,8);
+                        alt(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,9);
+                        phi(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,10);
+                        theta(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,11);
+                        psi(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,12);
+                        clkBias(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,13);
+                        clkDrift(count) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,14);
+
+                        true_u(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,1);
+                        true_v(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,2);
+                        true_w(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,3);
+                        true_speed(count) = norm([true_u(count) true_v(count) true_w(count)]);
+                        true_p(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,4);
+                        true_q(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,5);
+                        true_r(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,6);
+                        true_lat(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,7);
+                        true_long(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,8);
+                        true_alt(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,9);
+                        true_phi(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,10);
+                        true_theta(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,11);
+                        true_psi(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,12);
+                        true_clkBias(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,13);
+                        true_clkDrift(count) = loadedFile.run(1,mcIdx).truthStates(timeIdx,14);
+
                     catch
+                        u(count) = nan;
+                        v(count) = nan;
+                        w(count) = nan;
+                        speed(count) = nan;
+                        p(count) = nan;
+                        q(count) = nan;
+                        r(count) = nan;
+                        lat(count) = nan;
+                        long(count) = nan;
+                        alt(count) = nan;
+                        phi(count) = nan;
+                        theta(count) = nan;
+                        psi(count) = nan;
+                        clkBias(count) = nan;
+                        clkDrift(count) = nan;
 
-                        u(mcIdx) = nan;
-                        v(mcIdx) = nan;
-                        w(mcIdx) = nan;
-                        speed(mcIdx) = nan;
-                        p(mcIdx) = nan;
-                        q(mcIdx) = nan;
-                        r(mcIdx) = nan;
-                        lat(mcIdx) = nan;
-                        long(mcIdx) = nan;
-                        alt(mcIdx) = nan;
-                        phi(mcIdx) = nan;
-                        theta(mcIdx) = nan;
-                        psi(mcIdx) = nan;
-                        clkBias(mcIdx) = nan;
-                        clkDrift(mcIdx) = nan;
+                        true_u(count) = nan;
+                        true_v(count) = nan;
+                        true_w(count) = nan;
+                        true_speed(count) = nan;
+                        true_p(count) = nan;
+                        true_q(count) = nan;
+                        true_r(count) = nan;
+                        true_lat(count) = nan;
+                        true_long(count) = nan;
+                        true_alt(count) = nan;
+                        true_phi(count) = nan;
+                        true_theta(count) = nan;
+                        true_psi(count) = nan;
+                        true_clkBias(count) = nan;
+                        true_clkDrift(count) = nan;
                     end
-
+                    time(count) = loadedFile.run(1,1).tout(timeIdx);
                 end
 
-                rmsU(timeIdx) = rms(u(mcIdx),"omitnan");
-                rmsV(timeIdx) = rms(v(mcIdx),"omitnan");
-                rmsW(timeIdx) = rms(w(mcIdx),"omitnan");
-                rmsSpeed(timeIdx) = rms(speed(mcIdx),"omitnan");
-                rmsP(timeIdx) = rms(p(mcIdx),"omitnan");
-                rmsQ(timeIdx) = rms(q(mcIdx),"omitnan");
-                rmsR(timeIdx) = rms(r(mcIdx),"omitnan");
-                rmsLat(timeIdx) = rms(lat(mcIdx),"omitnan");
-                rmsLong(timeIdx) = rms(long(mcIdx),"omitnan");
-                rmsAlt(timeIdx) = rms(alt(mcIdx),"omitnan");
-                rmsPhi(timeIdx) = rms(phi(mcIdx),"omitnan");
-                rmsTheta(timeIdx) = rms(theta(mcIdx),"omitnan");
-                rmsPsi(timeIdx) = rms(psi(mcIdx),"omitnan");
-                rmsClkBias(timeIdx) = rms(clkBias(mcIdx),"omitnan");
-                rmsClkDrift(timeIdx) = rms(clkDrift(mcIdx),"omitnan");
+                rmsU(count) = rms(u(count),"omitnan");
+                rmsV(count) = rms(v(count),"omitnan");
+                rmsW(count) = rms(w(count),"omitnan");
+                rmsSpeed(count) = rms(speed(count),"omitnan");
+                rmsP(count) = rms(p(count),"omitnan");
+                rmsQ(count) = rms(q(count),"omitnan");
+                rmsR(count) = rms(r(count),"omitnan");
+                rmsLat(count) = rms(lat(count),"omitnan");
+                rmsLong(count) = rms(long(count),"omitnan");
+                rmsAlt(count) = rms(alt(count),"omitnan");
+                rmsPhi(count) = rms(phi(count),"omitnan");
+                rmsTheta(count) = rms(theta(count),"omitnan");
+                rmsPsi(count) = rms(psi(count),"omitnan");
+                rmsClkBias(count) = rms(clkBias(count),"omitnan");
+                rmsClkDrift(count) = rms(clkDrift(count),"omitnan");
+
+                rmseU(count) = rms(u(count) - true_u(count),"omitnan");
+                rmseV(count) = rms(v(count) - true_v(count),"omitnan");
+                rmseW(count) = rms(w(count) - true_w(count),"omitnan");
+                rmseSpeed(count) = rms(speed(count) - true_speed(count),"omitnan");
+                rmseP(count) = rms(p(count) - true_p(count),"omitnan");
+                rmseQ(count) = rms(q(count) - true_q(count),"omitnan");
+                rmseR(count) = rms(r(count) - true_r(count),"omitnan");
+                rmseLat(count) = rms(lat(count) - true_lat(count),"omitnan");
+                rmseLong(count) = rms(long(count) - true_long(count),"omitnan");
+                rmseAlt(count) = rms(alt(count) - true_alt(count),"omitnan");
+                rmsePhi(count) = rms(phi(count) - true_phi(count),"omitnan");
+                rmseTheta(count) = rms(theta(count) - true_theta(count),"omitnan");
+                rmsePsi(count) = rms(psi(count) - true_psi(count),"omitnan");
+                rmseClkBias(count) = rms(clkBias(count) - true_clkBias(count),"omitnan");
+                rmseClkDrift(count) = rms(clkDrift(count) - true_clkDrift(count),"omitnan");
 
                 stop = 1;
+                count = count + 1;
 
 
             end
@@ -90,7 +140,151 @@ classdef MonteCarloPlotting < handle
 
             obj.numMonteCarlos = 1;
 
+            %% Velocity RMS
+            figure('Position',[400 200 900 800])
+            tiledlayout(3,1)
+            nexttile
+            hold on
+            title('Velocity RMSE')
+            plot(time,rmseU)
+            ylabel('\deltaV_N [m/s]')
+            ax = gca;
+            ax.FontSize = 16;
+            ylim([0 8])
+            nexttile
+            hold on
+            plot(time,rmseV)
+            ylabel('\deltaV_E [m/s]')
+            ax = gca;
+            ax.FontSize = 16;
+            ylim([0 8])
+            nexttile
+            hold on
+            plot(time,rmseW)
+            ylabel('\deltaV_D[m/s]')
+            xlabel('Time [s]')
+            ax = gca;
+            ax.FontSize = 16;
+            ylim([0 8])
+
+
+            %% Angular Rates RMS
+            figure('Position',[200 200 900 800])
+            tiledlayout(3,1)
+            nexttile
+            hold on
+            title('Angular Rate RMSE')
+            plot(time,rmseP*180/pi)
+            ylabel('\deltap [deg/s]')
+            ax = gca;
+            ax.FontSize = 16;
+            ylim([0 180])
+            yticks([0 45 90 135 180])
+            nexttile
+            hold on
+            plot(time,rmseQ*180/pi)
+            ylabel('\deltaq [deg/s]')
+            ax = gca;
+            ax.FontSize = 16;
+            ylim([0 180])
+            yticks([0 45 90 135 180])
+            nexttile
+            hold on
+            plot(time,rmseR*180/pi)
+            ylabel('\deltar [deg/s]')
+            xlabel('Time [s]')
+            ylim([0 180])
+            yticks([0 45 90 135 180])
+            ax = gca;
+            ax.FontSize = 16;
+
+            %% Position RMS
+            figure('Position',[600 200 900 800])
+            tiledlayout(3,1)
+            nexttile
+            hold on
+            title('Position RMSE')
+            plot(time,rmseLong*180/pi)
+            ylabel('\delta\lambda [deg]')
+            ax = gca;
+            ax.FontSize = 16;
+            % ylim([0 8])
+            nexttile
+            hold on
+            plot(time,rmseLat*180/pi)
+            ylabel('\deltaL [deg]')
+            ax = gca;
+            ax.FontSize = 16;
+            % ylim([0 8])
+            nexttile
+            hold on
+            plot(time,rmseAlt)
+            ylabel('\deltah[m]')
+            xlabel('Time [s]')
+            ax = gca;
+            ax.FontSize = 16;
+            ylim([0 50])
+
+            %% Euler Angles RMS
+            figure('Position',[800 200 900 800])
+            tiledlayout(3,1)
+            nexttile
+            hold on
+            title('Euler Angles RMSE')
+            plot(time,abs(wrapTo180(rmsePhi*180/pi)))
+            ylabel('\delta\phi [deg]')
+            ax = gca;
+            ax.FontSize = 16;
+            ylim([0 180])
+            yticks([0 45 90 135 180])
+            nexttile
+            hold on
+            plot(time,rmseTheta*180/pi)
+            ylabel('\delta\theta [deg]')
+            ax = gca;
+            ax.FontSize = 16;
+            ylim([0 180])
+            yticks([0 45 90 135 180])
+            nexttile
+            hold on
+            plot(time,abs(wrapTo180(rmsePsi*180/pi)))
+            ylabel('\delta\psi [deg]')
+            xlabel('Time [s]')
+            ylim([0 180])
+            yticks([0 45 90 135 180])
+            ax = gca;
+            ax.FontSize = 16;
+
+            %% Clock Terms
+            figure('Position',[1000 200 900 800])
+            tiledlayout(2,1)
+            nexttile
+            hold on
+            title('Clock Bias/Drift RMSE')
+            plot(time,rmseClkBias)
+            ylabel('Clock Bias Error [m]')
+            ax = gca;
+            ax.FontSize = 16;
+            nexttile
+            hold on
+            plot(time,rmseClkDrift)
+            ylabel('Clock Drift Error [m/s]')
+            ax = gca;
+            ax.FontSize = 16;
+
+            %% Geoplot
+
+            figure('Position',[1000 200 900 800])
+            for mcIdx = 1:numMCRuns
+                geoplot(loadedFile.run(1,mcIdx).estimatedStates(:,7)*180/pi,loadedFile.run(1,mcIdx).estimatedStates(:,8)*180/pi,'*','Color',obj.secondaryColor)
+                hold on
+                ax = gca;
+                ax.FontSize = 16;
+            end
+            geoplot(loadedFile.run(1,1).truthStates(:,7)*180/pi,loadedFile.run(1,1).truthStates(:,8)*180/pi,'LineWidth',obj.lw,'Color',obj.primaryColor)
+
         end
+
 
 
     end

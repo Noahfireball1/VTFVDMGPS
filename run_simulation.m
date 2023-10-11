@@ -28,7 +28,7 @@ inputFilePath = append(dir.config,inputFile);
 printText(7);
 run = parsim(model);
 
-save(append(dir.output,sprintf('%s_results.mat',inputFile(1:end-5))),"run")
+save(append(dir.output,sprintf('%s_results.mat',inputFile(1:end-5))),"run","-v7.3")
 
 
 
