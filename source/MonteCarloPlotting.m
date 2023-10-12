@@ -146,21 +146,21 @@ classdef MonteCarloPlotting < handle
             nexttile
             hold on
             title('Velocity RMSE')
-            plot(time,rmseU)
+            plot(time,rmseU,LineWidth=2,Color=obj.primaryColor)
             ylabel('\deltaV_N [m/s]')
             ax = gca;
             ax.FontSize = 16;
             ylim([0 8])
             nexttile
             hold on
-            plot(time,rmseV)
+            plot(time,rmseV,LineWidth=2,Color=obj.primaryColor)
             ylabel('\deltaV_E [m/s]')
             ax = gca;
             ax.FontSize = 16;
             ylim([0 8])
             nexttile
             hold on
-            plot(time,rmseW)
+            plot(time,rmseW,LineWidth=2,Color=obj.primaryColor)
             ylabel('\deltaV_D[m/s]')
             xlabel('Time [s]')
             ax = gca;
@@ -174,7 +174,7 @@ classdef MonteCarloPlotting < handle
             nexttile
             hold on
             title('Angular Rate RMSE')
-            plot(time,rmseP*180/pi)
+            plot(time,rmseP*180/pi,LineWidth=2,Color=obj.primaryColor)
             ylabel('\deltap [deg/s]')
             ax = gca;
             ax.FontSize = 16;
@@ -182,7 +182,7 @@ classdef MonteCarloPlotting < handle
             yticks([0 45 90 135 180])
             nexttile
             hold on
-            plot(time,rmseQ*180/pi)
+            plot(time,rmseQ*180/pi,LineWidth=2,Color=obj.primaryColor)
             ylabel('\deltaq [deg/s]')
             ax = gca;
             ax.FontSize = 16;
@@ -190,7 +190,7 @@ classdef MonteCarloPlotting < handle
             yticks([0 45 90 135 180])
             nexttile
             hold on
-            plot(time,rmseR*180/pi)
+            plot(time,rmseR*180/pi,LineWidth=2,Color=obj.primaryColor)
             ylabel('\deltar [deg/s]')
             xlabel('Time [s]')
             ylim([0 180])
@@ -204,21 +204,21 @@ classdef MonteCarloPlotting < handle
             nexttile
             hold on
             title('Position RMSE')
-            plot(time,rmseLong*180/pi)
+            plot(time,rmseLong*180/pi,LineWidth=2,Color=obj.primaryColor)
             ylabel('\delta\lambda [deg]')
             ax = gca;
             ax.FontSize = 16;
             % ylim([0 8])
             nexttile
             hold on
-            plot(time,rmseLat*180/pi)
+            plot(time,rmseLat*180/pi,LineWidth=2,Color=obj.primaryColor)
             ylabel('\deltaL [deg]')
             ax = gca;
             ax.FontSize = 16;
             % ylim([0 8])
             nexttile
             hold on
-            plot(time,rmseAlt)
+            plot(time,rmseAlt,LineWidth=2,Color=obj.primaryColor)
             ylabel('\deltah[m]')
             xlabel('Time [s]')
             ax = gca;
@@ -231,7 +231,7 @@ classdef MonteCarloPlotting < handle
             nexttile
             hold on
             title('Euler Angles RMSE')
-            plot(time,abs(wrapTo180(rmsePhi*180/pi)))
+            plot(time,abs(wrapTo180(rmsePhi*180/pi)),LineWidth=2,Color=obj.primaryColor)
             ylabel('\delta\phi [deg]')
             ax = gca;
             ax.FontSize = 16;
@@ -239,7 +239,7 @@ classdef MonteCarloPlotting < handle
             yticks([0 45 90 135 180])
             nexttile
             hold on
-            plot(time,rmseTheta*180/pi)
+            plot(time,rmseTheta*180/pi,LineWidth=2,Color=obj.primaryColor)
             ylabel('\delta\theta [deg]')
             ax = gca;
             ax.FontSize = 16;
@@ -247,7 +247,7 @@ classdef MonteCarloPlotting < handle
             yticks([0 45 90 135 180])
             nexttile
             hold on
-            plot(time,abs(wrapTo180(rmsePsi*180/pi)))
+            plot(time,abs(wrapTo180(rmsePsi*180/pi)),LineWidth=2,Color=obj.primaryColor)
             ylabel('\delta\psi [deg]')
             xlabel('Time [s]')
             ylim([0 180])
@@ -261,28 +261,16 @@ classdef MonteCarloPlotting < handle
             nexttile
             hold on
             title('Clock Bias/Drift RMSE')
-            plot(time,rmseClkBias)
+            plot(time,rmseClkBias,LineWidth=2,Color=obj.primaryColor)
             ylabel('Clock Bias Error [m]')
             ax = gca;
             ax.FontSize = 16;
             nexttile
             hold on
-            plot(time,rmseClkDrift)
+            plot(time,rmseClkDrift,LineWidth=2,Color=obj.primaryColor)
             ylabel('Clock Drift Error [m/s]')
             ax = gca;
             ax.FontSize = 16;
-
-            %% Geoplot
-
-            figure('Position',[1000 200 900 800])
-            for mcIdx = 1:numMCRuns
-                geoplot(loadedFile.run(1,mcIdx).estimatedStates(:,7)*180/pi,loadedFile.run(1,mcIdx).estimatedStates(:,8)*180/pi,'*','Color',obj.secondaryColor)
-                hold on
-                ax = gca;
-                ax.FontSize = 16;
-            end
-            geoplot(loadedFile.run(1,1).truthStates(:,7)*180/pi,loadedFile.run(1,1).truthStates(:,8)*180/pi,'LineWidth',obj.lw,'Color',obj.primaryColor)
-
         end
 
 
