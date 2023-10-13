@@ -56,7 +56,7 @@ clkDrift = clkNoise(2);
 
 initP = eye(14);
 
-Q = blkdiag(diag([2500 2500 1000 1e-1 1e-1 1e-1 1e-9 1e-9 10000 0 0 0]),clkVar);
+Q = blkdiag(diag([2000 2000 500 0 0 0 1e-9 1e-9 10000 0 0 0]),clkVar);
 
 printText(10)
 fprintf('\t\t\t')

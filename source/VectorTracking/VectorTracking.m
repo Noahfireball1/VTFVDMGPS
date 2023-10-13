@@ -58,8 +58,14 @@ predictedCovariance = Phi*predictedCovariance*Phi' + Phi*blkdiag(Q(1:12,1:12)*Ti
 
 %% Measurement Update
 update = 1;
-if (time > 60 && time < 150)
-    initCN0 = (31623 - 351.26*(time - 60)).*ones(31,1);
+if (time > 60 && time < 120)
+    initCN0 = (31623 - 527*(time - 60)).*ones(31,1);
+elseif (time >= 120 && time < 150)
+    initCN0 = 10.*ones(31,1);
+
+elseif (time >= 150 && time < 240)
+
+    initCN0 = (10 + 527.05*(time - 120)).*ones(31,1);
 else
     initCN0 = 31623.*ones(31,1);
 end
