@@ -98,6 +98,8 @@ if mod(time,1/50) == 0 && update
         truthPos = [truthStates_e(1) truthStates_e(2) truthStates_e(3)];
         truthVel = [truthStates_e(4) truthStates_e(5) truthStates_e(6)];
         [truthRange,truthRangeRate,~,~] = calcRange(truthPos,truthVel,svPos,svVel);
+        truthPsr =  truthRange + truthStates_e(7) - c*satStates(7,:)';
+        truthPsrDot = truthRangeRate - truthStates_e(8);
 
         % Calculating Estimated Pseudorange from SV to User based on ESTIMATED states
         estiPos = [estStates_e(1) estStates_e(2) estStates_e(3)];
@@ -107,7 +109,7 @@ if mod(time,1/50) == 0 && update
         psrDot = rangeRate - estStates_e(8);
 
         % Generate Correlator Residuals
-        [resPsr,resCarr,varPsr,varCarr,CN0,Amplitude,Noise,Phase] = genCorrelatorResiduals(truthRange(activeSVs),psr(activeSVs),truthRangeRate(activeSVs),psrDot(activeSVs),...
+        [resPsr,resCarr,varPsr,varCarr,CN0,Amplitude,Noise,Phase] = genCorrelatorResiduals(truthPsr(activeSVs),psr(activeSVs),truthPsrDot(activeSVs),psrDot(activeSVs),...
             oldCN0,oldAmplitude,oldNoise,activeSVs,oldPhase,initCN0);
 
         % Form Z Array
