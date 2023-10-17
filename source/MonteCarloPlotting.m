@@ -14,120 +14,74 @@ classdef MonteCarloPlotting < handle
 
     methods
         function obj = MonteCarloPlotting(outputFilePath)
-
+            mcGoodIdx = [];
             loadedFile = load(outputFilePath);
             numMCRuns = size(loadedFile.run,2);
             % Determining RMS value for each state
+            for i = 1:100
+                successfulRuns = loadedFile.run(1,i).estimatedStates(end,9);
+
+                if ~isnan(successfulRuns) && successfulRuns > 0
+                    mcGoodIdx = [mcGoodIdx i];
+                end
+            end
+
 
             count = 1;
             for timeIdx = 1:20:length(loadedFile.run(1,1).tout)
-                for mcIdx = 1:numMCRuns
-                    try
-                        u(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,1);
-                        v(count,mcIdx)= loadedFile.run(1,mcIdx).estimatedStates(timeIdx,2);
-                        w(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,3);
-                        speed(count,mcIdx)= norm([u(count) v(count) w(count)]);
-                        p(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,4);
-                        q(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,5);
-                        r(count,mcIdx)= loadedFile.run(1,mcIdx).estimatedStates(timeIdx,6);
-                        lat(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,7);
-                        long(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,8);
-                        alt(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,9);
-                        phi(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,10);
-                        theta(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,11);
-                        psi(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,12);
-                        clkBias(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,13);
-                        clkDrift(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,14);
-                        codephaseError(mcIdx,:,count) = loadedFile.run(1,mcIdx).resPsr(timeIdx,:);
-                        carrFreqError(mcIdx,:,count) = loadedFile.run(1,mcIdx).resCarr(timeIdx,:);
+                for mcIdx = mcGoodIdx
+                    u(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,1);
+                    v(count,mcIdx)= loadedFile.run(1,mcIdx).estimatedStates(timeIdx,2);
+                    w(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,3);
+                    speed(count,mcIdx)= norm([u(count) v(count) w(count)]);
+                    p(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,4);
+                    q(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,5);
+                    r(count,mcIdx)= loadedFile.run(1,mcIdx).estimatedStates(timeIdx,6);
+                    lat(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,7);
+                    long(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,8);
+                    alt(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,9);
+                    phi(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,10);
+                    theta(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,11);
+                    psi(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,12);
+                    clkBias(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,13);
+                    clkDrift(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,14);
+                    codephaseError(mcIdx,:,count) = loadedFile.run(1,mcIdx).resPsr(timeIdx,:);
+                    carrFreqError(mcIdx,:,count) = loadedFile.run(1,mcIdx).resCarr(timeIdx,:);
 
-                        true_u(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,1);
-                        true_v(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,2);
-                        true_w(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,3);
-                        true_speed(count,mcIdx) = norm([true_u(count) true_v(count) true_w(count)]);
-                        true_p(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,4);
-                        true_q(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,5);
-                        true_r(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,6);
-                        true_lat(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,7);
-                        true_long(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,8);
-                        true_alt(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,9);
-                        true_phi(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,10);
-                        true_theta(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,11);
-                        true_psi(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,12);
-                        true_clkBias(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,13);
-                        true_clkDrift(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,14);
+                    true_u(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,1);
+                    true_v(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,2);
+                    true_w(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,3);
+                    true_speed(count,mcIdx) = norm([true_u(count) true_v(count) true_w(count)]);
+                    true_p(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,4);
+                    true_q(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,5);
+                    true_r(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,6);
+                    true_lat(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,7);
+                    true_long(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,8);
+                    true_alt(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,9);
+                    true_phi(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,10);
+                    true_theta(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,11);
+                    true_psi(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,12);
+                    true_clkBias(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,13);
+                    true_clkDrift(count,mcIdx) = loadedFile.run(1,mcIdx).truthStates(timeIdx,14);
 
-                    catch
-                        u(count,mcIdx) = nan;
-                        v(count,mcIdx) = nan;
-                        w(count,mcIdx) = nan;
-                        speed(count,mcIdx) = nan;
-                        p(count,mcIdx)= nan;
-                        q(count,mcIdx) = nan;
-                        r(count,mcIdx) = nan;
-                        lat(count,mcIdx) = nan;
-                        long(count,mcIdx) = nan;
-                        alt(count,mcIdx) = nan;
-                        phi(count,mcIdx) = nan;
-                        theta(count,mcIdx) = nan;
-                        psi(count,mcIdx) = nan;
-                        clkBias(count,mcIdx) = nan;
-                        clkDrift(count,mcIdx) = nan;
-                        codephaseError(mcIdx,:,count) = nan(1,31,1);
-                        carrFreqError(mcIdx,:,count) = nan(1,31,1);
-
-                        true_u(count,mcIdx) = nan;
-                        true_v(count,mcIdx) = nan;
-                        true_w(count,mcIdx) = nan;
-                        true_speed(count,mcIdx) = nan;
-                        true_p(count,mcIdx) = nan;
-                        true_q(count,mcIdx) = nan;
-                        true_r(count,mcIdx) = nan;
-                        true_lat(count,mcIdx) = nan;
-                        true_long(count,mcIdx) = nan;
-                        true_alt(count,mcIdx) = nan;
-                        true_phi(count,mcIdx) = nan;
-                        true_theta(count,mcIdx) = nan;
-                        true_psi(count,mcIdx) = nan;
-                        true_clkBias(count,mcIdx) = nan;
-                        true_clkDrift(count,mcIdx) = nan;
-                    end
                     time(count) = loadedFile.run(1,1).tout(timeIdx);
                 end
 
-                rmsU(count) = rms(u(count,:),"omitnan");
-                rmsV(count) = rms(v(count,:),"omitnan");
-                rmsW(count) = rms(w(count,:),"omitnan");
-                rmsSpeed(count) = rms(speed(count,:),"omitnan");
-                rmsP(count) = rms(p(count,:),"omitnan");
-                rmsQ(count) = rms(q(count,:),"omitnan");
-                rmsR(count) = rms(r(count,:),"omitnan");
-                rmsLat(count) = rms(lat(count,:),"omitnan");
-                rmsLong(count) = rms(long(count,:),"omitnan");
-                rmsAlt(count) = rms(alt(count,:),"omitnan");
-                rmsPhi(count) = rms(phi(count,:),"omitnan");
-                rmsTheta(count) = rms(theta(count,:),"omitnan");
-                rmsPsi(count) = rms(psi(count,:),"omitnan");
-                rmsClkBias(count) = rms(clkBias(count,:),"omitnan");
-                rmsClkDrift(count) = rms(clkDrift(count,:),"omitnan");
-
-                rmseU(count) = rms(u(count,:) - true_u(count,:),"omitnan");
-                rmseV(count) = rms(v(count,:) - true_v(count,:),"omitnan");
-                rmseW(count) = rms(w(count,:) - true_w(count,:),"omitnan");
-                rmseSpeed(count) = rms(speed(count,:) - true_speed(count,:),"omitnan");
-                rmseP(count) = rms(p(count,:)- true_p(count,:),"omitnan");
-                rmseQ(count) = rms(q(count,:) - true_q(count,:),"omitnan");
-                rmseR(count) = rms(r(count,:) - true_r(count,:),"omitnan");
-                rmseLat(count) = rms(lat(count,:) - true_lat(count,:),"omitnan");
-                rmseLong(count) = rms(long(count,:) - true_long(count,:),"omitnan");
-                rmseAlt(count) = rms(alt(count,:) - true_alt(count,:),"omitnan");
-                rmsePhi(count) = rms(phi(count,:) - true_phi(count,:),"omitnan");
-                rmseTheta(count) = rms(theta(count,:) - true_theta(count,:),"omitnan");
-                rmsePsi(count) = rms(psi(count,:) - true_psi(count,:),"omitnan");
-                rmseClkBias(count) = rms(clkBias(count,:) - true_clkBias(count,:),"omitnan");
-                rmseClkDrift(count) = rms(clkDrift(count,:) - true_clkDrift(count,:),"omitnan");
-                rmseCodePhase(count,1:31) = rms(codephaseError(:,:,count),"omitnan");
-                rmseCarrFreq(count,1:31) = rms(carrFreqError(:,:,count),"omitnan");
+                rmseU(count) = rms(u(count,mcGoodIdx) - true_u(count,mcGoodIdx),"omitnan");
+                rmseV(count) = rms(v(count,mcGoodIdx) - true_v(count,mcGoodIdx),"omitnan");
+                rmseW(count) = rms(w(count,mcGoodIdx) - true_w(count,mcGoodIdx),"omitnan");
+                rmseSpeed(count) = rms(speed(count,mcGoodIdx) - true_speed(count,mcGoodIdx),"omitnan");
+                rmseP(count) = rms(p(count,mcGoodIdx)- true_p(count,mcGoodIdx),"omitnan");
+                rmseQ(count) = rms(q(count,mcGoodIdx) - true_q(count,mcGoodIdx),"omitnan");
+                rmseR(count) = rms(r(count,mcGoodIdx) - true_r(count,mcGoodIdx),"omitnan");
+                rmseLat(count) = rms(lat(count,mcGoodIdx) - true_lat(count,mcGoodIdx),"omitnan");
+                rmseLong(count) = rms(long(count,mcGoodIdx) - true_long(count,mcGoodIdx),"omitnan");
+                rmseAlt(count) = rms(alt(count,mcGoodIdx) - true_alt(count,mcGoodIdx),"omitnan");
+                rmsePhi(count) = rms(phi(count,mcGoodIdx) - true_phi(count,mcGoodIdx),"omitnan");
+                rmseTheta(count) = rms(theta(count,mcGoodIdx) - true_theta(count,mcGoodIdx),"omitnan");
+                rmsePsi(count) = rms(psi(count,mcGoodIdx) - true_psi(count,mcGoodIdx),"omitnan");
+                rmseClkBias(count) = rms(clkBias(count,mcGoodIdx) - true_clkBias(count,mcGoodIdx),"omitnan");
+                rmseClkDrift(count) = rms(clkDrift(count,mcGoodIdx) - true_clkDrift(count,mcGoodIdx),"omitnan");
 
                 stop = 1;
                 count = count + 1;
@@ -285,7 +239,7 @@ classdef MonteCarloPlotting < handle
             hold on
             fill([60 150 150 60],[0 0 0.15 0.15],[0.961 0.961 0.863],'EdgeColor','none')
             plot(time,rmseClkDrift,LineWidth=2,Color=obj.primaryColor)
-            
+
             ylabel('Clock Drift Error [m/s]')
             ax = gca;
             ax.FontSize = 16;
