@@ -1,4 +1,4 @@
-function [resPsr,resCarr,varPsr,varCarr,newCN0,newAmplitude,newNoise,newPhase] = genCorrelatorResiduals(refPsr,estPsr,refCarr,estCarr,oldCN0,oldAmplitude,oldNoise,activeSVIdx,oldPhase,initCN0)
+function [resPsr,resCarr,varPsr,varCarr,newCN0,newAmplitude,newNoise,newPhase,IP,QP,IE,QE,IL,QL] = genCorrelatorResiduals(refPsr,estPsr,refCarr,estCarr,oldCN0,oldAmplitude,oldNoise,activeSVIdx,oldPhase,initCN0)
 chipOffset = 0.5;
 pdiTime = 1/50;
 

@@ -11,7 +11,7 @@ aircraft:
   waypoints: SCurveFlightPath
   lookaheadDistance: 50 # [m]
   noiseVariance: [0;0;0;0;0;0;1e-14;1e-14;0;pi/1000;pi/1000;pi/1000]
-  clockType: HIGH-TCXO # [LOW-TCXO;HIGH-TXCO;OCXO;RUBIDIUM;CESIUM]
+  clockType: OCXO # [LOW-TCXO;HIGH-TXCO;OCXO;RUBIDIUM;CESIUM]
   initialState:
     u: 75 # [m/s]
     v: 0 # [m/s]
@@ -28,5 +28,5 @@ aircraft:
     clkBias: 0
     clkDrift: 0
 signal:
-  CN0: 22
+  CN0: 16
   amplitude: 1

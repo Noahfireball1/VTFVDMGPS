@@ -5,13 +5,13 @@ general:
   day: 22
   outputDir: # If user wants to output result files to an external drive, otherwise save to current output directory
   duration: 300
-  monteCarloRuns: 100
+  monteCarloRuns: 1
 aircraft:
   frequency: 200 # [Hz]
   waypoints: SCurveFlightPath
   lookaheadDistance: 50 # [m]
   noiseVariance: [0;0;0;0;0;0;1e-14;1e-14;0;pi/1000;pi/1000;pi/1000]
-  clockType: HIGH-TCXO # [LOW-TCXO;HIGH-TXCO;OCXO;RUBIDIUM;CESIUM]
+  clockType: OCXO # [LOW-TCXO;HIGH-TXCO;OCXO;RUBIDIUM;CESIUM]
   initialState:
     u: 75 # [m/s]
     v: 0 # [m/s]
@@ -28,5 +28,5 @@ aircraft:
     clkBias: 0
     clkDrift: 0
 signal:
-  CN0: 22
+  CN0: 20
   amplitude: 1

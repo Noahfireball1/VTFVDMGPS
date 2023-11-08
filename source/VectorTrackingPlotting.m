@@ -16,7 +16,7 @@ classdef VectorTrackingPlotting < handle
         function obj = VectorTrackingPlotting(outputFilePath)
 
             loadedFile = load(outputFilePath);
-            obj.outputs = loadedFile.run;
+            obj.outputs = loadedFile.run(1,1);
             obj.timeUpdateTime = obj.outputs.tout;
             obj.measUpdateTime = obj.timeUpdateTime(1):1/50:obj.timeUpdateTime(end);
             dtMeas = diff(obj.measUpdateTime);
@@ -30,7 +30,7 @@ classdef VectorTrackingPlotting < handle
 
             obj.plotStates();
 
-            obj.plotErrors();
+            % obj.plotErrors();
 
             obj.plotResiduals();
 
@@ -40,6 +40,30 @@ classdef VectorTrackingPlotting < handle
 
             obj.satellitePlot();
 
+            % for i = [1 7 13 14 15 17 19 21 29]
+                figure('Position',[200 200 900 400])
+                hold on
+                s1 = plot(movmean(sqrt(obj.outputs.IE(1:4:end,[1 7 13 14 15 17 19 21 29]).^2 + obj.outputs.QE(1:4:end,[1 7 13 14 15 17 19 21 29]).^2),100),'Color',obj.primaryColor,'LineWidth',2);
+                s2 = plot((movmean(sqrt(obj.outputs.IP(1:4:end,[1 7 13 14 15 17 19 21 29]).^2 + obj.outputs.QP(1:4:end,[1 7 13 14 15 17 19 21 29]).^2),100)),'Color',obj.secondaryColor,'LineWidth',2);
+                s3 = plot(movmean(sqrt(obj.outputs.IL(1:4:end,[1 7 13 14 15 17 19 21 29]).^2 + obj.outputs.QL(1:4:end,[1 7 13 14 15 17 19 21 29]).^2),100),'Color','k','LineWidth',2);
+                legend([s1(1) s2(1) s3(1)],'Early Power','Prompt Power','Late Power')
+                xlabel('Samples')
+                xlim([0 3000])
+                ax = gca;
+                ax.FontSize = obj.fs;
+            % end
+
+            for i = [1 7 13 14 15 17 19 21 29]
+            figure('Position',[200 200 900 800])
+            hold on
+
+            s2 = plot(obj.outputs.IP(1:4:end,i),obj.outputs.QP(1:4:end,i),'*');
+            end
+            residualCodePhase = obj.outputs.resPsr(1:4:end,[1 7 13 14 15 17 19 21 29])/(299792458/1.023e6);
+            residualCarrierFreq = obj.outputs.resCarr(1:4:end,[1 7 13 14 15 17 19 21 29])/(-299792458/1575.42e6);
+
+            disp(mean(rms(residualCodePhase)))
+            disp(mean(rms(residualCarrierFreq)))
         end
 
         function plotMap(obj)
@@ -47,10 +71,10 @@ classdef VectorTrackingPlotting < handle
             figure('Position',[200 200 900 800])
             geoplot(obj.outputs.estimatedStates(:,7).*(180/pi),obj.outputs.estimatedStates(:,8).*(180/pi),'*','Color',obj.secondaryColor)
             hold on
-            geoplot(obj.outputs.truthStates(obj.timeIdx,7).*(180/pi),obj.outputs.truthStates(obj.timeIdx,8).*(180/pi),'LineWidth',obj.lw,'Color',obj.primaryColor)
+            geoplot(obj.outputs.truthStates(:,7).*(180/pi),obj.outputs.truthStates(:,8).*(180/pi),'LineWidth',obj.lw,'Color',obj.primaryColor)
             legend('Estimated','Truth')
             ax = gca;
-            ax.FontSize = obj.fs;
+            ax.FontSize = 20;
 
         end
 
@@ -63,7 +87,7 @@ classdef VectorTrackingPlotting < handle
             title('Velocity - NED Frame')
             ylabel('North [m/s]')
             plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,1),'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,1),'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,obj.outputs.truthStates(:,1),'LineWidth',obj.lw,'Color',obj.primaryColor)
             ax = gca;
             ax.FontSize = obj.fs;
 
@@ -71,7 +95,7 @@ classdef VectorTrackingPlotting < handle
             hold on
             ylabel('East [m/s]')
             plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,2),'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,2),'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,obj.outputs.truthStates(:,2),'LineWidth',obj.lw,'Color',obj.primaryColor)
             legend('Estimated','Truth','Location','eastoutside')
             ax = gca;
             ax.FontSize = obj.fs;
@@ -81,7 +105,7 @@ classdef VectorTrackingPlotting < handle
             ylabel('Down [m/s]')
             xlabel('Time [s]')
             plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,3),'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,3),'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,obj.outputs.truthStates(:,3),'LineWidth',obj.lw,'Color',obj.primaryColor)
             ax = gca;
             ax.FontSize = obj.fs;
 
@@ -94,7 +118,7 @@ classdef VectorTrackingPlotting < handle
             title('Angular Rates - Body Frame')
             ylabel('Roll Rate [deg/s]')
             plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,4)*R2D,'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,4)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,obj.outputs.truthStates(:,4)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
             ylim([-180 180])
             yticks([-180 -90 0 90 180])
             ax = gca;
@@ -104,7 +128,7 @@ classdef VectorTrackingPlotting < handle
             hold on
             ylabel('Pitch Rate [deg/s]')
             plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,5)*R2D,'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,5)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,obj.outputs.truthStates(:,5)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
             ylim([-180 180])
             yticks([-180 -90 0 90 180])
             legend('Estimated','Truth','Location','eastoutside')
@@ -116,7 +140,7 @@ classdef VectorTrackingPlotting < handle
             ylabel('Yaw Rate [deg/s]')
             xlabel('Time [s]')
             plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,6)*R2D,'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,6)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,obj.outputs.truthStates(:,6)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
             ylim([-180 180])
             yticks([-180 -90 0 90 180])
             ax = gca;
@@ -132,7 +156,7 @@ classdef VectorTrackingPlotting < handle
             title('Position - NED Frame')
             ylabel('North [m]')
             plot(obj.timeUpdateTime,noiseNED(:,1),'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,truthNED(:,1),'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,truthNED(:,1),'LineWidth',obj.lw,'Color',obj.primaryColor)
             ax = gca;
             ax.FontSize = obj.fs;
 
@@ -140,7 +164,7 @@ classdef VectorTrackingPlotting < handle
             hold on
             ylabel('East [m]')
             plot(obj.timeUpdateTime,noiseNED(:,2),'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,truthNED(:,2),'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,truthNED(:,2),'LineWidth',obj.lw,'Color',obj.primaryColor)
             legend('Estimated','Truth','Location','eastoutside')
             ax = gca;
             ax.FontSize = obj.fs;
@@ -150,7 +174,7 @@ classdef VectorTrackingPlotting < handle
             ylabel('Down [m]')
             xlabel('Time [s]')
             plot(obj.timeUpdateTime,noiseNED(:,3),'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,truthNED(:,3),'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,truthNED(:,3),'LineWidth',obj.lw,'Color',obj.primaryColor)
             xlim([0 180])
             ax = gca;
             ax.FontSize = obj.fs;
@@ -163,7 +187,7 @@ classdef VectorTrackingPlotting < handle
             title('Euler Angles')
             ylabel('Roll [deg]')
             plot(obj.timeUpdateTime,wrapTo180(obj.outputs.estimatedStates(:,10)*R2D),'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,10)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,obj.outputs.truthStates(:,10)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
             ylim([-180 180])
             yticks([-180 -90 0 90 180])
             ax = gca;
@@ -173,7 +197,7 @@ classdef VectorTrackingPlotting < handle
             hold on
             ylabel('Pitch [deg]')
             plot(obj.timeUpdateTime,wrapTo180(obj.outputs.estimatedStates(:,11)*R2D),'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,11)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,obj.outputs.truthStates(:,11)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
             legend('Estimated','Truth','Location','eastoutside')
             ylim([-180 180])
             yticks([-180 -90 0 90 180])
@@ -185,7 +209,7 @@ classdef VectorTrackingPlotting < handle
             ylabel('Yaw [deg]')
             xlabel('Time [s]')
             plot(obj.timeUpdateTime,wrapTo180(obj.outputs.estimatedStates(:,12)*R2D),'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,12)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,obj.outputs.truthStates(:,12)*R2D,'LineWidth',obj.lw,'Color',obj.primaryColor)
             ylim([-180 180])
             yticks([-180 -90 0 90 180])
             ax = gca;
@@ -199,7 +223,7 @@ classdef VectorTrackingPlotting < handle
             title('Clock Bias and Drift')
             ylabel('Bias [m]')
             plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,13),'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,13),'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,obj.outputs.truthStates(:,13),'LineWidth',obj.lw,'Color',obj.primaryColor)
             ax = gca;
             ax.FontSize = obj.fs;
 
@@ -208,7 +232,7 @@ classdef VectorTrackingPlotting < handle
             ylabel('Drift [m/s]')
             xlabel('Time [s]')
             plot(obj.timeUpdateTime,obj.outputs.estimatedStates(:,14),'LineWidth',obj.lw,'Color',obj.secondaryColor)
-            plot(obj.timeUpdateTime ,obj.outputs.truthStates(:,14),'LineWidth',obj.lw,'Color',obj.primaryColor)
+            plot(obj.measUpdateTime ,obj.outputs.truthStates(:,14),'LineWidth',obj.lw,'Color',obj.primaryColor)
 
             legend('Estimated','Truth','Location','northoutside')
             ax = gca;
@@ -345,23 +369,27 @@ classdef VectorTrackingPlotting < handle
             if ~isnan(avgResCarr(1))
                 figure('Position',[1400 200 900 800])
                 hold on
-                title('Residual Pseudoranges of In-View SVs')
+                % title('Residual Pseudoranges of In-View SVs')
                 s1 = scatter(obj.measUpdateTime ,obj.outputs.resPsr(obj.timeIdx,:),'k*');
                 p1 = plot(obj.measUpdateTime ,avgResPsr(obj.timeIdx) ,'Color',obj.secondaryColor,LineWidth=2);
                 xlabel('Time [s]')
                 ylabel('Residuals [m]')
                 legend([s1(1),p1(1)],'Residual Pseudoranges','Mean')
+                % ylim([0 100])
+                xlim([60 180])
                 ax = gca;
                 ax.FontSize = obj.fs;
 
                 figure('Position',[1600 200 900 800])
                 hold on
-                title('Residual Pseudorange-Rate of In-View SVs')
+                % title('Residual Pseudorange-Rate of In-View SVs')
                 s2 = scatter(obj.measUpdateTime,obj.outputs.resCarr(obj.timeIdx,:),'k*');
                 p2 = plot(obj.measUpdateTime ,avgResCarr(obj.timeIdx) ,'Color',obj.secondaryColor,LineWidth=2);
                 xlabel('Time [s]')
                 ylabel('Residuals [m/s]')
                 legend([s2(1),p2(1)],'Residual Pseudorange-Rates','Mean')
+                % ylim([0 100])
+                xlim([60 180])
                 ax = gca;
                 ax.FontSize = obj.fs;
             else
@@ -425,8 +453,8 @@ classdef VectorTrackingPlotting < handle
 
         function plotCN0(obj)
 
-            CN0idx = diff(obj.outputs.CN0,1,1) ~= 0;
-            CN0idx = find(CN0idx(obj.timeIdx(2)-1,:));
+            % CN0idx = diff(obj.outputs.CN0,1,1) ~= 0;
+            CN0idx = [1 7 13 14 15 17 19 21 29];
             for i = 1:length(CN0idx)
                 CN0plot(:,i) = 10*log(obj.outputs.CN0(:,CN0idx(i)))/log(10);
 
@@ -443,8 +471,9 @@ classdef VectorTrackingPlotting < handle
                 third = 150+1/200:1/200:180;
 
                 s1 = plot(obj.timeUpdateTime(obj.timeIdx),CN0plot(obj.timeIdx,:),'LineWidth',obj.lw,'Color',obj.primaryColor);
-                s2 = plot(obj.timeUpdateTime,[ones(1,length(first)).*45 ones(1,length(second)).*25 ones(1,length(third)).*45],'LineWidth',3,'Color',obj.secondaryColor,'LineStyle','--');
-                legend([s1(1),s2(1)],'Estimated CN0','Design CN0')
+                % s2 = plot(obj.timeUpdateTime,[ones(1,length(first)).*45 ones(1,length(second)).*25 ones(1,length(third)).*45],'LineWidth',3,'Color',obj.secondaryColor,'LineStyle','--');
+                % legend([s1(1),s2(1)],'Estimated CN0','Design CN0')
+                ylim([0 50])
                 ax = gca;
                 ax.FontSize = obj.fs;
             else
@@ -466,25 +495,27 @@ classdef VectorTrackingPlotting < handle
 
                 figure('Position',[1400 200 900 800])
                 hold on
-                title('Pseudorange Variance of In-View SVs')
+                % title('Pseudorange Variance of In-View SVs')
                 s1 = scatter(obj.measUpdateTime ,obj.outputs.varPsr(obj.timeIdx,:),'k*');
                 p1 = plot(obj.measUpdateTime ,avgVarPsr(obj.timeIdx) ,'Color',obj.secondaryColor,LineWidth=2);
                 legend([s1(1),p1(1)],'Pseudorange Variance','Mean')
                 xlabel('Time [s]')
                 ylabel('Variance [m]')
-                ylim([minVarPsr*0.8 maxVarPsr*1.2])
+                % ylim([0 10000])
+                xlim([60 180])
                 ax = gca;
                 ax.FontSize = obj.fs;
 
                 figure('Position',[1600 200 900 800])
                 hold on
-                title('Pseudorange-Rate Variance of In-View SVs')
+                % title('Pseudorange-Rate Variance of In-View SVs')
                 s2 = scatter(obj.measUpdateTime,obj.outputs.varCarr(obj.timeIdx,:),'k*');
                 p2 = plot(obj.measUpdateTime ,avgVarCarr(obj.timeIdx) ,'Color',obj.secondaryColor,LineWidth=2);
                 legend([s2(1),p2(1)],'Pseudorange-Rate Variance','Mean')
                 xlabel('Time [s]')
                 ylabel('Variance [m/s]')
-                ylim([minVarCarr*0.8 maxVarCarr*1.2])
+                % ylim([0 100])
+                xlim([60 180])
                 ax = gca;
                 ax.FontSize = obj.fs;
             else

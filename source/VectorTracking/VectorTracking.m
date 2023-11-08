@@ -1,4 +1,4 @@
-function [estimatedStates,receiverStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase,satStates] = ...
+function [estimatedStates,receiverStates,residualPsr,residualCarr,variancePsr,varianceCarr,estimatedCovariance,newCN0,newAmplitude,newNoise,newPhase,satStates,IP,QP,IE,QE,IL,QL,truthStates_e] = ...
     VectorTracking(forces,moments,predictedStates,trueF_ib_b,trueM_ib_b,receiverStates,predictedCovariance,rinexFilePath,time,year,month,day,oldCN0,oldAmplitude,oldNoise,...
     oldPhase,initCN0,Time_Step,variance,clkVar,Q)
 
@@ -11,6 +11,14 @@ newAmplitude = oldAmplitude';
 newNoise = oldNoise';
 newPhase = oldPhase';
 satStates = zeros(7,31);
+IP = zeros(1,31);
+QP = zeros(1,31);
+IE = zeros(1,31);
+QE = zeros(1,31);
+IL = zeros(1,31);
+QL = zeros(1,31);
+truthStates_e = zeros(1,8);
+
 
 c = 299792458;
 e = 0.0818191910428; % eccentricity
@@ -18,7 +26,7 @@ R_0 = 6378137.0; % equatorial radius [meters]
 
 %% Propagate Receiver States
 truthStates_n = equationsOfMotion(receiverStates,trueF_ib_b,trueM_ib_b,Time_Step);
-truthStates_n = truthStates_n + sqrt(Q)*randn(14,1)*Time_Step;
+truthStates_n = truthStates_n + chol(Q)*randn(14,1).*[ones(12,1).*Time_Step; 1;1];
 % For Conversion to ECEF Frame
 trueLat = truthStates_n(7);
 trueLong = truthStates_n(8);
@@ -58,9 +66,7 @@ predictedCovariance = Phi*predictedCovariance*Phi' + Phi*blkdiag(Q(1:12,1:12)*Ti
 
 %% Measurement Update
 update = 1;
-if time > 60 && time < 150
-    initCN0 = 10^(35/10)*ones(1,31);
-end
+
 if mod(time,1/50) == 0 && update
     try
         %% Convert True States to ECEF Frame [Positions; Velocities; Clock Bias; Clock Drift]
@@ -98,18 +104,18 @@ if mod(time,1/50) == 0 && update
         truthPos = [truthStates_e(1) truthStates_e(2) truthStates_e(3)];
         truthVel = [truthStates_e(4) truthStates_e(5) truthStates_e(6)];
         [truthRange,truthRangeRate,~,~] = calcRange(truthPos,truthVel,svPos,svVel);
-        truthPsr =  truthRange + truthStates_e(7) - c*satStates(7,:)';
+        truthPsr =  truthRange + truthStates_e(7);
         truthPsrDot = truthRangeRate - truthStates_e(8);
 
         % Calculating Estimated Pseudorange from SV to User based on ESTIMATED states
         estiPos = [estStates_e(1) estStates_e(2) estStates_e(3)];
         estiVel = [estStates_e(4) estStates_e(5) estStates_e(6)];
         [range,rangeRate,unitVectors,activeSVs] = calcRange(estiPos,estiVel,svPos,svVel);
-        psr = range + estStates_e(7) - c*satStates(7,:)';
+        psr = range + estStates_e(7);
         psrDot = rangeRate - estStates_e(8);
 
         % Generate Correlator Residuals
-        [resPsr,resCarr,varPsr,varCarr,CN0,Amplitude,Noise,Phase] = genCorrelatorResiduals(truthPsr(activeSVs),psr(activeSVs),truthPsrDot(activeSVs),psrDot(activeSVs),...
+        [resPsr,resCarr,varPsr,varCarr,CN0,Amplitude,Noise,Phase,IPest,QPest,IEest,QEest,ILest,QLest] = genCorrelatorResiduals(truthPsr(activeSVs),psr(activeSVs),truthPsrDot(activeSVs),psrDot(activeSVs),...
             oldCN0,oldAmplitude,oldNoise,activeSVs,oldPhase,initCN0);
 
         % Form Z Array
@@ -141,6 +147,12 @@ if mod(time,1/50) == 0 && update
         newAmplitude(activeIdx) = Amplitude;
         newNoise(activeIdx) = Noise;
         newPhase(activeIdx) = Phase;
+        IP(activeIdx) = IPest;
+        QP(activeIdx) = QPest;
+        IE(activeIdx) = IEest;
+        QE(activeIdx) = QEest;
+        IL(activeIdx) = ILest;
+        QL(activeIdx) = QLest;
     catch
         sprintf('%f',time)
 

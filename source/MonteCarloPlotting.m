@@ -29,7 +29,7 @@ classdef MonteCarloPlotting < handle
 
             count = 1;
             for timeIdx = 1:20:length(loadedFile.run(1,1).tout)
-                for mcIdx = mcGoodIdx
+                for mcIdx = [1:7 9:100]
                     u(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,1);
                     v(count,mcIdx)= loadedFile.run(1,mcIdx).estimatedStates(timeIdx,2);
                     w(count,mcIdx) = loadedFile.run(1,mcIdx).estimatedStates(timeIdx,3);

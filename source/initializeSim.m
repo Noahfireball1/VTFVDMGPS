@@ -54,9 +54,9 @@ clkNoise = sqrt(clkVar)*randn(2,1);
 clkBias = clkNoise(1);
 clkDrift = clkNoise(2);
 
-initP = zeros(14);
+initP = blkdiag(zeros(12),clkVar);
 
-Q = blkdiag(diag([150 150 300 0 0 0 0 0 0 0 0 0]),clkVar);
+Q = blkdiag(diag([150 150 1 1e-12 1e-12 1e-12 1e-14 1e-14 10 1e-10 1e-10 1e-10]),clkVar);
 
 printText(10)
 fprintf('\t\t\t')

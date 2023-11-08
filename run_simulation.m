@@ -18,18 +18,85 @@ dir.output = append(projectRoot,filesep,'output',filesep);
 %% Initial Text to Console
 printText(8);
 
-%% Selecting Configuration File
-inputFile = uigetfile({'*.yaml'},'Select Input File',dir.config);
-inputFilePath = append(dir.config,inputFile);
+% %% 45 db MC
+% % Initializing Simulation
+% [model,dir] = initializeSim('C:\Users\nsm0014\graduate\thesis\VTFVDMGPS\config\MC_100_45db.yaml',dir);
+% % Starting Simulation
+% printText(7);
+% run = parsim(model);
+% 
+% save(append(dir.output,'Straight_MC_100_45db_results.mat'),"run","-v7.3")
+% 
+% clear run
+% 
+% %% 35 db MC
+% 
+% % Initializing Simulation
+% [model,dir] = initializeSim('C:\Users\nsm0014\graduate\thesis\VTFVDMGPS\config\MC_100_35db.yaml',dir);
+% % Starting Simulation
+% printText(7);
+% run = parsim(model);
+% 
+% save(append(dir.output,'Straight_MC_100_35db_results.mat'),"run","-v7.3")
+% 
+% clear run
+% 
+% %% 25 db MC
+% 
+% % Initializing Simulation
+% [model,dir] = initializeSim('C:\Users\nsm0014\graduate\thesis\VTFVDMGPS\config\MC_100_25db.yaml',dir);
+% % Starting Simulation
+% printText(7);
+% run = parsim(model);
+% 
+% save(append(dir.output,'Straight_MC_100_25db_results.mat'),"run","-v7.3")
+% 
+% clear run
+% 
+% %% 22 db MC
+% 
+% % Initializing Simulation
+% [model,dir] = initializeSim('C:\Users\nsm0014\graduate\thesis\VTFVDMGPS\config\MC_100_22db.yaml',dir);
+% % Starting Simulation
+% printText(7);
+% run = parsim(model);
+% 
+% save(append(dir.output,'Straight_MC_100_22db_results.mat'),"run","-v7.3")
+% 
+% clear run
 
-%% Initializing Simulation
-[model,dir] = initializeSim(inputFilePath,dir);
-%% Starting Simulation
+%% 20 db MC
+
+% Initializing Simulation
+[model,dir] = initializeSim('C:\Users\nsm0014\graduate\thesis\VTFVDMGPS\config\MC_100_20db.yaml',dir);
+% Starting Simulation
 printText(7);
-run = parsim(model);
+run = sim(model);
 
-save(append(dir.output,sprintf('%s_results.mat',inputFile(1:end-5))),"run","-v7.3")
+save(append(dir.output,'Straight_MC_100_20db_results.mat'),"run","-v7.3")
 
+clear run
 
-
-
+% %% 18 db MC
+% 
+% % Initializing Simulation
+% [model,dir] = initializeSim('C:\Users\nsm0014\graduate\thesis\VTFVDMGPS\config\MC_100_18db.yaml',dir);
+% % Starting Simulation
+% printText(7);
+% run = parsim(model);
+% 
+% save(append(dir.output,'Straight_MC_100_18db_results.mat'),"run","-v7.3")
+% 
+% clear run
+% 
+% %% 16 db MC
+% 
+% % Initializing Simulation
+% [model,dir] = initializeSim('C:\Users\nsm0014\graduate\thesis\VTFVDMGPS\config\MC_100_16db.yaml',dir);
+% % Starting Simulation
+% printText(7);
+% run = parsim(model);
+% 
+% save(append(dir.output,'Straight_MC_100_16db_results.mat'),"run","-v7.3")
+% 
+% clear run
