@@ -68,6 +68,12 @@ newNoise = 0.99*oldNoise(activeSVIdx) + 0.01*gpsNoise';
 
 newCN0 = ((newAmplitude - 4*newNoise)./(2*pdiTime*newNoise));
 
+for i = 1:length(newCN0)
+    if newCN0(i) <= 0
+        newCN0(i) = 1;
+    end
+end
+
 % Generating pseudorange and pseudorange rate residuals
 chipWidth = 299792458/1.023e6;
 wavelength = 299792458/1575.42e6;

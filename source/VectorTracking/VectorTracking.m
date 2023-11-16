@@ -62,7 +62,7 @@ estiR_E = (R_0)/(sqrt(1 - (e^2)*sin(estiLat)^2));
 Phi = formPHI(predictedStates,forces,moments,Time_Step);
 
 % Predict New Covariance
-predictedCovariance = Phi*predictedCovariance*Phi' + Phi*blkdiag(Q(1:12,1:12)*Time_Step,clkVar)*Phi';
+predictedCovariance = Phi*predictedCovariance*Phi' + Phi*blkdiag(Q(1:12,1:12)*Time_Step,clkVar*1000)*Phi';
 
 %% Measurement Update
 update = 1;
@@ -105,14 +105,14 @@ if mod(time,1/50) == 0 && update
         truthVel = [truthStates_e(4) truthStates_e(5) truthStates_e(6)];
         [truthRange,truthRangeRate,~,~] = calcRange(truthPos,truthVel,svPos,svVel);
         truthPsr =  truthRange + truthStates_e(7);
-        truthPsrDot = truthRangeRate - truthStates_e(8);
+        truthPsrDot = truthRangeRate + truthStates_e(8);
 
         % Calculating Estimated Pseudorange from SV to User based on ESTIMATED states
         estiPos = [estStates_e(1) estStates_e(2) estStates_e(3)];
         estiVel = [estStates_e(4) estStates_e(5) estStates_e(6)];
         [range,rangeRate,unitVectors,activeSVs] = calcRange(estiPos,estiVel,svPos,svVel);
         psr = range + estStates_e(7);
-        psrDot = rangeRate - estStates_e(8);
+        psrDot = rangeRate + estStates_e(8);
 
         % Generate Correlator Residuals
         [resPsr,resCarr,varPsr,varCarr,CN0,Amplitude,Noise,Phase,IPest,QPest,IEest,QEest,ILest,QLest] = genCorrelatorResiduals(truthPsr(activeSVs),psr(activeSVs),truthPsrDot(activeSVs),psrDot(activeSVs),...
