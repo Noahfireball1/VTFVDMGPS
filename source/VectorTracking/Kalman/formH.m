@@ -29,8 +29,8 @@ for i = 1:2:2*length(unitVectors(:,1))
         (R_E + alt)*cos(lat)*uv_n(2);...
         -uv_n(3)];     
 
-    H(i,1:14) = [uv_n(1) uv_n(2) uv_n(3) zeros(1,3) zeros(1,3) zeros(1,3) 0 1];
-    H(i+1,1:14) = [zeros(1,3) zeros(1,3) uv_n_lla(1) uv_n_lla(2) uv_n_lla(3) zeros(1,3) 1 0];
+    H(i,1:14) = [uv_n(1) uv_n(2) uv_n(3) zeros(1,3) zeros(1,3) zeros(1,3) 0 -1];
+    H(i+1,1:14) = [zeros(1,3) zeros(1,3) uv_n_lla(1) uv_n_lla(2) uv_n_lla(3) zeros(1,3) -1 0];
 
     count = count + 1;
 end
